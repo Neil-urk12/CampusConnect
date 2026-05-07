@@ -59,7 +59,7 @@ class AnnouncementService {
   }
 
   /// Create a new announcement (admin/moderator only)
-  Future<void> createAnnouncement({
+  Future<String> createAnnouncement({
     required AnnouncementEntity announcement,
     required List<String> userRoles,
   }) async {
@@ -74,7 +74,7 @@ class AnnouncementService {
       // Validate announcement data
       _validateAnnouncement(announcement);
 
-      await _repository.createAnnouncement(announcement);
+      return await _repository.createAnnouncement(announcement);
     } on AnnouncementException {
       rethrow;
     } catch (e) {

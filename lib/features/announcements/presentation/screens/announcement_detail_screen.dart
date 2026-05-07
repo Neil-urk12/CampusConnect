@@ -398,9 +398,12 @@ class AnnouncementDetailScreen extends ConsumerWidget {
     AnnouncementEntity announcement,
   ) {
     final theme = Theme.of(context);
+    // Capture screen context before dialog builder
+    final screenContext = context;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Announcement?'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -419,13 +422,13 @@ class AnnouncementDetailScreen extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.of(context).pop();
-              _deleteAnnouncement(context, ref, announcement);
+              Navigator.of(dialogContext).pop();
+              _deleteAnnouncement(screenContext, ref, announcement);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.error,
@@ -442,15 +445,6 @@ class AnnouncementDetailScreen extends ConsumerWidget {
     WidgetRef ref,
     AnnouncementEntity announcement,
   ) async {
-    // Show loading
-    if (!context.mounted) return;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-
     try {
       final announcementService = ref.read(announcementServiceProvider);
       final authState = ref.read(authStateNotifierProvider);
@@ -463,7 +457,6 @@ class AnnouncementDetailScreen extends ConsumerWidget {
       );
 
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
         Navigator.of(context).pop(); // Go back to list
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -478,7 +471,6 @@ class AnnouncementDetailScreen extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to delete announcement: $e'),

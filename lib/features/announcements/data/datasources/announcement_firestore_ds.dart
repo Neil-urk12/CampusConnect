@@ -82,12 +82,22 @@ class AnnouncementFirestoreDataSource {
   }
 
   /// Create a new announcement
-  Future<void> createAnnouncement(AnnouncementModel announcement) async {
+  Future<String> createAnnouncement(AnnouncementModel announcement) async {
     try {
-      await _firestore
-          .collection('announcements')
-          .doc(announcement.id)
-          .set(announcement.toJson());
+      // If ID is empty, let Firestore generate one
+      if (announcement.id.isEmpty) {
+        final docRef = await _firestore
+            .collection('announcements')
+            .add(announcement.toJson());
+        return docRef.id;
+      } else {
+        // Use provided ID (for cases where ID is pre-generated)
+        await _firestore
+            .collection('announcements')
+            .doc(announcement.id)
+            .set(announcement.toJson());
+        return announcement.id;
+      }
     } catch (e) {
       AppLogger.error('Error creating announcement', error: e);
       throw AnnouncementNetworkException(

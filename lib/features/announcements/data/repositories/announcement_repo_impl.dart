@@ -33,9 +33,9 @@ class AnnouncementRepositoryImpl implements AnnouncementRepository {
   }
 
   @override
-  Future<void> createAnnouncement(AnnouncementEntity announcement) async {
+  Future<String> createAnnouncement(AnnouncementEntity announcement) async {
     final model = AnnouncementModel.fromEntity(announcement);
-    await _dataSource.createAnnouncement(model);
+    return await _dataSource.createAnnouncement(model);
   }
 
   @override

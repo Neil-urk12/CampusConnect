@@ -15,7 +15,7 @@ abstract class AnnouncementRepository {
   Future<AnnouncementEntity> getAnnouncementById(String id);
 
   /// Create a new announcement (admin only)
-  Future<void> createAnnouncement(AnnouncementEntity announcement);
+  Future<String> createAnnouncement(AnnouncementEntity announcement);
 
   /// Update an existing announcement (admin only)
   Future<void> updateAnnouncement(AnnouncementEntity announcement);
