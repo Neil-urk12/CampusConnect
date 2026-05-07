@@ -37,6 +37,8 @@ class _AnnouncementFormScreenState
             .read(announcementFormProvider.notifier)
             .initializeForEdit(widget.announcement!);
       } else if (!widget.isEditMode) {
+        // Reset form for create mode
+        ref.read(announcementFormProvider.notifier).resetForm();
         _checkForDraft();
       }
     });

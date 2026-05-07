@@ -30,6 +30,13 @@ class AnnouncementFormNotifier extends Notifier<AnnouncementFormState> {
     _loadExistingAnnouncement(announcement);
   }
 
+  /// Reset form to blank state (for create mode)
+  void resetForm() {
+    _isEditMode = false;
+    _existingAnnouncement = null;
+    state = const AnnouncementFormState();
+  }
+
   /// Load existing announcement data for editing
   void _loadExistingAnnouncement(AnnouncementEntity announcement) {
     state = AnnouncementFormState(
