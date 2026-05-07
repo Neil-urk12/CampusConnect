@@ -9,13 +9,28 @@ import '../../../../providers/auth_providers.dart';
 import '../../../../core/theme/app_theme.dart';
 
 /// Detail screen for viewing a single announcement with admin actions
-class AnnouncementDetailScreen extends ConsumerWidget {
+class AnnouncementDetailScreen extends ConsumerStatefulWidget {
   final AnnouncementEntity announcement;
 
   const AnnouncementDetailScreen({super.key, required this.announcement});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AnnouncementDetailScreen> createState() =>
+      _AnnouncementDetailScreenState();
+}
+
+class _AnnouncementDetailScreenState
+    extends ConsumerState<AnnouncementDetailScreen> {
+  late AnnouncementEntity _currentAnnouncement;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentAnnouncement = widget.announcement;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authStateNotifierProvider);
     final user = authState.user;
     final userRole = user?.role ?? '';
@@ -44,9 +59,9 @@ class AnnouncementDetailScreen extends ConsumerWidget {
               icon: Icon(Icons.more_vert, color: primaryColor),
               onSelected: (value) {
                 if (value == 'edit') {
-                  _navigateToEdit(context, announcement);
+                  _navigateToEdit(context, _currentAnnouncement);
                 } else if (value == 'delete') {
-                  _showDeleteDialog(context, ref, announcement);
+                  _showDeleteDialog(context, ref, _currentAnnouncement);
                 }
               },
               itemBuilder: (context) => [
@@ -86,12 +101,12 @@ class AnnouncementDetailScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Badges (Pinned/Urgent)
-            if (announcement.isPinned || announcement.isUrgent)
+            if (_currentAnnouncement.isPinned || _currentAnnouncement.isUrgent)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Row(
                   children: [
-                    if (announcement.isPinned)
+                    if (_currentAnnouncement.isPinned)
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -122,9 +137,10 @@ class AnnouncementDetailScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                    if (announcement.isPinned && announcement.isUrgent)
+                    if (_currentAnnouncement.isPinned &&
+                        _currentAnnouncement.isUrgent)
                       const SizedBox(width: 8),
-                    if (announcement.isUrgent)
+                    if (_currentAnnouncement.isUrgent)
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -173,7 +189,7 @@ class AnnouncementDetailScreen extends ConsumerWidget {
                 children: [
                   // Title
                   Text(
-                    announcement.title,
+                    _currentAnnouncement.title,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -200,7 +216,7 @@ class AnnouncementDetailScreen extends ConsumerWidget {
                           ),
                         ),
                         child: Text(
-                          announcement.category,
+                          _currentAnnouncement.category,
                           style: GoogleFonts.manrope(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -213,7 +229,7 @@ class AnnouncementDetailScreen extends ConsumerWidget {
                       Text(
                         DateFormat(
                           'MMM d, yyyy • h:mm a',
-                        ).format(announcement.createdAt),
+                        ).format(_currentAnnouncement.createdAt),
                         style: GoogleFonts.manrope(
                           fontSize: 13,
                           color: const Color(0xFF6C757D),
@@ -225,7 +241,7 @@ class AnnouncementDetailScreen extends ConsumerWidget {
 
                   // Body
                   Text(
-                    announcement.body,
+                    _currentAnnouncement.body,
                     style: GoogleFonts.manrope(
                       fontSize: 16,
                       height: 1.6,
@@ -235,11 +251,11 @@ class AnnouncementDetailScreen extends ConsumerWidget {
                   const SizedBox(height: 20),
 
                   // Tags
-                  if (announcement.tags.isNotEmpty) ...[
+                  if (_currentAnnouncement.tags.isNotEmpty) ...[
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: announcement.tags.map((tag) {
+                      children: _currentAnnouncement.tags.map((tag) {
                         return Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
@@ -265,11 +281,11 @@ class AnnouncementDetailScreen extends ConsumerWidget {
                   ],
 
                   // Image attachment
-                  if (announcement.attachmentUrl != null) ...[
+                  if (_currentAnnouncement.attachmentUrl != null) ...[
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: Image.network(
-                        announcement.attachmentUrl!,
+                        _currentAnnouncement.attachmentUrl!,
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
@@ -291,13 +307,14 @@ class AnnouncementDetailScreen extends ConsumerWidget {
                   ],
 
                   // CTA button
-                  if (announcement.isPinned &&
-                      announcement.ctaLabel != null &&
-                      announcement.ctaUrl != null) ...[
+                  if (_currentAnnouncement.isPinned &&
+                      _currentAnnouncement.ctaLabel != null &&
+                      _currentAnnouncement.ctaUrl != null) ...[
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () => _launchUrl(announcement.ctaUrl!),
+                        onPressed: () =>
+                            _launchUrl(_currentAnnouncement.ctaUrl!),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: secondaryColor,
                           foregroundColor: Colors.white,
@@ -307,7 +324,7 @@ class AnnouncementDetailScreen extends ConsumerWidget {
                           ),
                         ),
                         child: Text(
-                          announcement.ctaLabel!,
+                          _currentAnnouncement.ctaLabel!,
                           style: GoogleFonts.manrope(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -327,12 +344,16 @@ class AnnouncementDetailScreen extends ConsumerWidget {
                       CircleAvatar(
                         radius: 20,
                         backgroundColor: primaryColor.withValues(alpha: 0.1),
-                        backgroundImage: announcement.authorAvatarUrl != null
-                            ? NetworkImage(announcement.authorAvatarUrl!)
+                        backgroundImage:
+                            _currentAnnouncement.authorAvatarUrl != null
+                            ? NetworkImage(
+                                _currentAnnouncement.authorAvatarUrl!,
+                              )
                             : null,
-                        child: announcement.authorAvatarUrl == null
+                        child: _currentAnnouncement.authorAvatarUrl == null
                             ? Text(
-                                announcement.authorName[0].toUpperCase(),
+                                _currentAnnouncement.authorName[0]
+                                    .toUpperCase(),
                                 style: GoogleFonts.plusJakartaSans(
                                   fontWeight: FontWeight.bold,
                                   color: primaryColor,
@@ -346,16 +367,16 @@ class AnnouncementDetailScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              announcement.authorName,
+                              _currentAnnouncement.authorName,
                               style: GoogleFonts.manrope(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF1E1E1E),
                               ),
                             ),
-                            if (announcement.authorDepartment != null)
+                            if (_currentAnnouncement.authorDepartment != null)
                               Text(
-                                announcement.authorDepartment!,
+                                _currentAnnouncement.authorDepartment!,
                                 style: GoogleFonts.manrope(
                                   fontSize: 12,
                                   color: const Color(0xFF6C757D),
@@ -370,7 +391,7 @@ class AnnouncementDetailScreen extends ConsumerWidget {
                   // Target audience
                   const SizedBox(height: 16),
                   Text(
-                    'Visible to: ${announcement.targetAudience.map((a) => a[0].toUpperCase() + a.substring(1)).join(', ')}',
+                    'Visible to: ${_currentAnnouncement.targetAudience.map((a) => a[0].toUpperCase() + a.substring(1)).join(', ')}',
                     style: GoogleFonts.manrope(
                       fontSize: 12,
                       color: const Color(0xFF6C757D),
@@ -386,10 +407,28 @@ class AnnouncementDetailScreen extends ConsumerWidget {
     );
   }
 
-  void _navigateToEdit(BuildContext context, AnnouncementEntity announcement) {
-    Navigator.of(
+  Future<void> _navigateToEdit(
+    BuildContext context,
+    AnnouncementEntity announcement,
+  ) async {
+    final result = await Navigator.of(
       context,
     ).pushNamed('/announcements/edit', arguments: announcement);
+
+    // If edit succeeded, refresh announcement data
+    if (result == true && mounted) {
+      try {
+        final announcementService = ref.read(announcementServiceProvider);
+        final freshAnnouncement = await announcementService.getAnnouncementById(
+          announcement.id,
+        );
+        setState(() {
+          _currentAnnouncement = freshAnnouncement;
+        });
+      } catch (e) {
+        // Silently fail - user can refresh by navigating back and forth
+      }
+    }
   }
 
   void _showDeleteDialog(
@@ -410,7 +449,7 @@ class AnnouncementDetailScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              announcement.title,
+              _currentAnnouncement.title,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
@@ -452,7 +491,7 @@ class AnnouncementDetailScreen extends ConsumerWidget {
       final userRoles = userRole.isNotEmpty ? <String>[userRole] : <String>[];
 
       await announcementService.deleteAnnouncement(
-        id: announcement.id,
+        id: _currentAnnouncement.id,
         userRoles: userRoles,
       );
 
