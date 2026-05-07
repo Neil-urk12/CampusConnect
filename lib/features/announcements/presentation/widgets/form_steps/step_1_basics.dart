@@ -3,11 +3,37 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/announcement_form_provider.dart';
 
 /// Step 1: Basics - Title, Body, Urgent, Pinned
-class Step1Basics extends ConsumerWidget {
+class Step1Basics extends ConsumerStatefulWidget {
   const Step1Basics({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<Step1Basics> createState() => _Step1BasicsState();
+}
+
+class _Step1BasicsState extends ConsumerState<Step1Basics> {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _bodyController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize controllers with current state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final formState = ref.read(announcementFormProvider);
+      _titleController.text = formState.title;
+      _bodyController.text = formState.body;
+    });
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _bodyController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final formState = ref.watch(announcementFormProvider);
     final formNotifier = ref.read(announcementFormProvider.notifier);
 
@@ -18,10 +44,7 @@ class Step1Basics extends ConsumerWidget {
         children: [
           // Title field
           TextField(
-            controller: TextEditingController(text: formState.title)
-              ..selection = TextSelection.collapsed(
-                offset: formState.title.length,
-              ),
+            controller: _titleController,
             decoration: InputDecoration(
               labelText: 'Title *',
               hintText: 'Enter announcement title',
@@ -37,10 +60,7 @@ class Step1Basics extends ConsumerWidget {
 
           // Body field
           TextField(
-            controller: TextEditingController(text: formState.body)
-              ..selection = TextSelection.collapsed(
-                offset: formState.body.length,
-              ),
+            controller: _bodyController,
             decoration: InputDecoration(
               labelText: 'Body *',
               hintText: 'Enter announcement content',
