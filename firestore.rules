@@ -198,9 +198,16 @@ service cloud.firestore {
       // All authenticated users can read events
       allow read: if isAuthenticated();
       
-      // Only admins and moderators can create/update/delete events
+      // Only admins and moderators can create events
       allow create: if isAdminOrModerator();
-      allow update: if isAdminOrModerator();
+      
+      // Admins and moderators can update any field
+      // Regular users can only update attendeeCount (for RSVP transactions)
+      allow update: if isAdminOrModerator() || 
+                       (isAuthenticated() && 
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendeeCount']));
+      
+      // Only admins and moderators can delete events
       allow delete: if isAdminOrModerator();
       
       // RSVPs subcollection rules
