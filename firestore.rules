@@ -193,6 +193,17 @@ service cloud.firestore {
       allow delete: if isAdminOrModerator();
     }
     
+    // Events collection rules
+    match /events/{eventId} {
+      // All authenticated users can read events
+      allow read: if isAuthenticated();
+      
+      // Only admins and moderators can create/update/delete events
+      allow create: if isAdminOrModerator();
+      allow update: if isAdminOrModerator();
+      allow delete: if isAdminOrModerator();
+    }
+    
     // Deny all other access by default
     match /{document=**} {
       allow read, write: if false;
