@@ -2,10 +2,10 @@ import 'package:equatable/equatable.dart';
 
 /// RSVP status for event attendance
 enum RsvpStatus {
-  /// User is confirmed to attend the event
+  /// User is confirmed to attend the event (counts toward capacity)
   attending,
 
-  /// User is on the waitlist for a full event
+  /// User is on the waitlist for a full event (does not count toward capacity)
   waitlisted,
 }
 

@@ -94,7 +94,13 @@ class EventService {
   }
 
   /// Create an RSVP for a user to attend an event
-  /// Automatically determines status (attending or waitlisted) based on capacity
+  ///
+  /// Automatically determines status (attending or waitlisted) based on capacity.
+  /// If the event is at full capacity, the user will be added to the waitlist.
+  ///
+  /// Throws [EventValidationException] if eventId or userId is empty.
+  /// Throws [EventNotFoundException] if the event doesn't exist.
+  /// Throws [EventRsvpException] if RSVP creation fails.
   Future<RsvpEntity> attendEvent(String eventId, String userId) async {
     if (eventId.isEmpty) {
       throw EventValidationException('Event ID cannot be empty');
@@ -120,6 +126,12 @@ class EventService {
   }
 
   /// Cancel a user's RSVP for an event
+  ///
+  /// Removes the RSVP and decrements attendeeCount if the user was attending.
+  /// If the user was waitlisted, attendeeCount is not affected.
+  ///
+  /// Throws [EventValidationException] if eventId or userId is empty.
+  /// Throws [EventRsvpException] if cancellation fails.
   Future<void> cancelAttendance(String eventId, String userId) async {
     if (eventId.isEmpty) {
       throw EventValidationException('Event ID cannot be empty');
@@ -132,6 +144,10 @@ class EventService {
   }
 
   /// Get a user's RSVP status for an event
+  ///
+  /// Returns the RsvpEntity if the user has RSVP'd, or null if they haven't.
+  ///
+  /// Throws [EventValidationException] if eventId or userId is empty.
   /// Returns null if user has not RSVP'd
   Future<RsvpEntity?> getUserRsvp(String eventId, String userId) async {
     if (eventId.isEmpty) {
@@ -145,7 +161,13 @@ class EventService {
   }
 
   /// Upgrade a waitlisted user to attending status
-  /// Throws EventRsvpException if event is at capacity
+  ///
+  /// Changes the user's RSVP status from waitlisted to attending and increments
+  /// the event's attendeeCount. This operation uses a Firestore transaction to
+  /// ensure the event hasn't reached capacity.
+  ///
+  /// Throws [EventValidationException] if eventId or userId is empty.
+  /// Throws [EventRsvpException] if event is at capacity or upgrade fails.
   Future<RsvpEntity> upgradeFromWaitlist(String eventId, String userId) async {
     if (eventId.isEmpty) {
       throw EventValidationException('Event ID cannot be empty');

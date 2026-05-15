@@ -120,6 +120,12 @@ class FirestoreEventDataSource {
 
   /// Create an RSVP for a user using a Firestore transaction
   /// Atomically checks capacity, creates RSVP, and updates attendeeCount
+  ///
+  /// Transaction ensures:
+  /// - Read event document
+  /// - Check capacity and determine status (attending or waitlisted)
+  /// - Create RSVP document
+  /// - Update attendeeCount only if status is attending
   Future<RsvpEntity> createRsvp({
     required String eventId,
     required String userId,
@@ -173,6 +179,11 @@ class FirestoreEventDataSource {
 
   /// Delete an RSVP using a Firestore transaction
   /// Atomically deletes RSVP and decrements attendeeCount if user was attending
+  ///
+  /// Transaction ensures:
+  /// - Read RSVP to check status
+  /// - Delete RSVP document
+  /// - Decrement attendeeCount only if status was attending
   Future<void> deleteRsvp({
     required String eventId,
     required String userId,
@@ -238,6 +249,12 @@ class FirestoreEventDataSource {
 
   /// Update an RSVP status (for waitlist upgrade) using a Firestore transaction
   /// Atomically checks capacity, updates RSVP status, and increments attendeeCount
+  ///
+  /// Transaction ensures:
+  /// - Read event and RSVP documents
+  /// - Check capacity if upgrading to attending
+  /// - Update RSVP status
+  /// - Increment attendeeCount if upgrading from waitlisted to attending
   Future<RsvpEntity> updateRsvp({
     required String eventId,
     required String userId,
