@@ -24,12 +24,9 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
   }
 
   Future<void> _loadEventsForMonth(DateTime month) async {
-    final firstDay = DateTime(month.year, month.month, 1);
-    final lastDay = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
-
     try {
       final service = ref.read(eventServiceProvider);
-      final events = await service.getEventsForDateRange(firstDay, lastDay);
+      final events = await service.getEventsForMonth(month);
 
       final Map<DateTime, List<dynamic>> eventMap = {};
       for (final event in events) {

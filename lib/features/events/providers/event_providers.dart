@@ -96,10 +96,13 @@ class EventStateNotifier extends Notifier<EventScreenState> {
   Future<void> loadEventsForDate(DateTime date) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final service = ref.read(eventServiceProvider);
+      final repository = ref.read(eventRepositoryProvider);
       final startOfDay = DateTime(date.year, date.month, date.day);
       final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
-      final events = await service.getEventsForDateRange(startOfDay, endOfDay);
+      final events = await repository.getEventsForDateRange(
+        startOfDay,
+        endOfDay,
+      );
       state = state.copyWith(filteredEvents: events, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());

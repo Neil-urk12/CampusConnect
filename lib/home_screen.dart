@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'features/profile/profile_screen_riverpod.dart';
 import 'features/announcements/presentation/screens/announcements_screen.dart';
 import 'features/chat/presentation/screens/chat_screen.dart';
+import 'features/events/events_screen.dart';
+import 'features/events/providers/event_providers.dart';
+import 'app/routes.dart';
 import 'providers/auth_providers.dart';
 import 'appwrite_test_helper.dart';
 import 'auth/domain/user_display_name.dart';
@@ -19,8 +23,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    const DashboardTab(),
     const AnnouncementsScreen(),
+    const EventsScreen(),
     const ChatScreen(),
     const Center(child: Text("Library Tab")),
     const ProfileScreenRiverpod(),
@@ -54,8 +58,8 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(0, Icons.grid_view_rounded, "Home"),
-                _buildNavItem(1, Icons.campaign_outlined, "Announce"),
+                _buildNavItem(0, Icons.campaign_outlined, "Announce"),
+                _buildNavItem(1, Icons.event_outlined, "Events"),
                 _buildNavItem(2, Icons.chat_bubble_outline_rounded, "Chats"),
                 _buildNavItem(3, Icons.inventory_2_outlined, "Library"),
                 _buildNavItem(4, Icons.person_outline, "Profile"),
@@ -156,9 +160,13 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
         _statusColor = Colors.red;
       });
       if (mounted) {
+        final errorMsg = e.toString();
+        final truncated = errorMsg.length > 100
+            ? errorMsg.substring(0, 100)
+            : errorMsg;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Test failed: ${e.toString().substring(0, 100)}'),
+            content: Text('❌ Test failed: $truncated'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),
@@ -430,116 +438,234 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
             const SizedBox(height: 24),
 
             // Next Event Card
-            CardContainer(
-              variant: CardVariant.dark,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Opening Event Details...")),
-                );
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(
-                          Icons.calendar_month,
-                          color: Colors.lightBlueAccent,
-                          size: 24,
-                        ),
-                      ),
-                      Text(
-                        "NEXT EVENT",
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade400,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    "Campus Picnic",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Central Quad Gardens",
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      children: [
-                        Column(
-                          children: [
-                            const Text(
-                              "24",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              "OCT",
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey.shade400,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          height: 30,
-                          width: 1,
-                          color: Colors.grey.shade700,
-                          margin: const EdgeInsets.symmetric(horizontal: 16),
-                        ),
-                        Column(
+            Consumer(
+              builder: (context, ref, child) {
+                final nextEventAsync = ref.watch(allUpcomingEventsProvider);
+
+                return nextEventAsync.when(
+                  data: (events) {
+                    if (events.isEmpty) {
+                      return CardContainer(
+                        variant: CardVariant.dark,
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: const Icon(
+                                    Icons.calendar_month,
+                                    color: Colors.lightBlueAccent,
+                                    size: 24,
+                                  ),
+                                ),
+                                Text(
+                                  "NEXT EVENT",
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey.shade400,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 32),
                             const Text(
-                              "12:30 PM",
+                              "No Upcoming Events",
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 22,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 8),
                             Text(
-                              "32 attending",
+                              "Check back later for new events",
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 14,
                                 color: Colors.grey.shade400,
                               ),
                             ),
                           ],
+                        ),
+                      );
+                    }
+
+                    final nextEvent = events.first;
+                    final dateFormat = DateFormat('d');
+                    final monthFormat = DateFormat(
+                      'MMM',
+                    ).format(nextEvent.startDateTime).toUpperCase();
+                    final timeFormat = DateFormat(
+                      'h:mm a',
+                    ).format(nextEvent.startDateTime);
+
+                    return CardContainer(
+                      variant: CardVariant.dark,
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.eventDetail,
+                          arguments: nextEvent.id,
+                        );
+                      },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const Icon(
+                                  Icons.calendar_month,
+                                  color: Colors.lightBlueAccent,
+                                  size: 24,
+                                ),
+                              ),
+                              Text(
+                                "NEXT EVENT",
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade400,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 32),
+                          Text(
+                            nextEvent.title,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            nextEvent.location,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade400,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              children: [
+                                Column(
+                                  children: [
+                                    Text(
+                                      dateFormat.format(
+                                        nextEvent.startDateTime,
+                                      ),
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    Text(
+                                      monthFormat,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  height: 30,
+                                  width: 1,
+                                  color: Colors.grey.shade700,
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      timeFormat,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      "${nextEvent.attendeeCount} attending",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  loading: () => CardContainer(
+                    variant: CardVariant.dark,
+                    child: const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  ),
+                  error: (error, stack) => CardContainer(
+                    variant: CardVariant.dark,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 32,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          "Unable to load events",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Please try again later",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade400,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                );
+              },
             ),
 
             const SizedBox(height: 24),

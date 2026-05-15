@@ -22,23 +22,22 @@ class AnnouncementFirestoreDataSource {
       final isAdmin =
           userRoles.contains('admin') || userRoles.contains('moderator');
 
-      Query<Map<String, dynamic>> query = _firestore
-          .collection('announcements')
-          .orderBy('createdAt', descending: true)
-          .limit(limit);
+      Query<Map<String, dynamic>> query = _firestore.collection(
+        'announcements',
+      );
 
       // Only filter by targetAudience if user is not admin/moderator
       if (!isAdmin && userRoles.isNotEmpty) {
-        query = _firestore
-            .collection('announcements')
-            .where('targetAudience', arrayContainsAny: userRoles)
-            .orderBy('createdAt', descending: true)
-            .limit(limit);
+        query = query.where('targetAudience', arrayContainsAny: userRoles);
       }
 
+      // Apply category filter BEFORE orderBy (Firestore requirement)
       if (category != null && category.isNotEmpty && category != 'All') {
         query = query.where('category', isEqualTo: category);
       }
+
+      // Apply ordering and limit last
+      query = query.orderBy('createdAt', descending: true).limit(limit);
 
       return query.snapshots().map((snapshot) {
         return snapshot.docs.map((doc) {
