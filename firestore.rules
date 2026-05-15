@@ -202,6 +202,21 @@ service cloud.firestore {
       allow create: if isAdminOrModerator();
       allow update: if isAdminOrModerator();
       allow delete: if isAdminOrModerator();
+      
+      // RSVPs subcollection rules
+      match /rsvps/{userId} {
+        // Users can read their own RSVP
+        allow read: if isOwner(userId);
+        
+        // Users can create their own RSVP
+        allow create: if isOwner(userId);
+        
+        // Users can update their own RSVP (for waitlist upgrade)
+        allow update: if isOwner(userId);
+        
+        // Users can delete their own RSVP
+        allow delete: if isOwner(userId);
+      }
     }
     
     // Deny all other access by default
