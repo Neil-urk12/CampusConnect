@@ -8,6 +8,7 @@ import '../features/announcements/presentation/screens/announcement_detail_scree
 import '../features/announcements/presentation/screens/announcement_form_screen.dart';
 import '../features/announcements/domain/entities/announcement_entity.dart';
 import '../features/events/events_screen.dart';
+import '../features/events/presentation/screens/event_detail_screen.dart';
 import '../features/chat/presentation/screens/chat_screen.dart';
 import '../features/resources/resources_screen.dart';
 import '../features/profile/profile_screen_riverpod.dart';
@@ -26,6 +27,7 @@ class AppRoutes {
   static const String announcementCreate = '/announcements/create';
   static const String announcementEdit = '/announcements/edit';
   static const String events = '/events';
+  static const String eventDetail = '/events/detail';
   static const String chats = '/chats';
   static const String resources = '/resources';
   static const String profile = '/profile';
@@ -97,6 +99,13 @@ class AppRouteGenerator {
           settings: settings,
         );
 
+      case AppRoutes.eventDetail:
+        final eventId = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) => EventDetailScreen(eventId: eventId),
+          settings: settings,
+        );
+
       case AppRoutes.chats:
         return MaterialPageRoute(
           builder: (_) => const ChatScreen(),
@@ -133,6 +142,7 @@ class AppRouteGenerator {
     AppRoutes.announcementCreate,
     AppRoutes.announcementEdit,
     AppRoutes.events,
+    AppRoutes.eventDetail,
     AppRoutes.chats,
     AppRoutes.resources,
     AppRoutes.profile,
