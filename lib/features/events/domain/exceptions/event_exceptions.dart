@@ -27,3 +27,7 @@ class EventPermissionException extends EventException {
 class EventNetworkException extends EventException {
   EventNetworkException(String message) : super(message, code: 'network-error');
 }
+
+class EventRsvpException extends EventException {
+  EventRsvpException(String message) : super(message, code: 'rsvp-error');
+}

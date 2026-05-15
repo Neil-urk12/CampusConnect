@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../domain/entities/rsvp_entity.dart';
 import '../../domain/exceptions/event_exceptions.dart';
 import '../models/event_model.dart';
+import '../models/rsvp_model.dart';
 
 class FirestoreEventDataSource {
   final FirebaseFirestore _firestore;
@@ -113,6 +115,189 @@ class FirestoreEventDataSource {
       await batch.commit();
     } catch (e) {
       throw EventNetworkException('Failed to delete event: $e');
+    }
+  }
+
+  /// Create an RSVP for a user using a Firestore transaction
+  /// Atomically checks capacity, creates RSVP, and updates attendeeCount
+  Future<RsvpEntity> createRsvp({
+    required String eventId,
+    required String userId,
+    required RsvpStatus status,
+  }) async {
+    try {
+      return await _firestore.runTransaction<RsvpEntity>((transaction) async {
+        // Read event document
+        final eventRef = _firestore.collection(_collectionName).doc(eventId);
+        final eventSnapshot = await transaction.get(eventRef);
+
+        if (!eventSnapshot.exists) {
+          throw EventNotFoundException(eventId);
+        }
+
+        final eventData = eventSnapshot.data()!;
+        final capacity = eventData['capacity'] as int?;
+        final attendeeCount = eventData['attendeeCount'] as int? ?? 0;
+
+        // Determine RSVP status based on capacity
+        RsvpStatus finalStatus = status;
+        if (capacity != null && attendeeCount >= capacity) {
+          finalStatus = RsvpStatus.waitlisted;
+        }
+
+        // Create RSVP document
+        final now = DateTime.now();
+        final rsvpModel = RsvpModel(
+          userId: userId,
+          eventId: eventId,
+          status: finalStatus,
+          createdAt: now,
+          updatedAt: now,
+        );
+
+        final rsvpRef = eventRef.collection('rsvps').doc(userId);
+        transaction.set(rsvpRef, rsvpModel.toFirestore());
+
+        // Update attendeeCount only if status is attending
+        if (finalStatus == RsvpStatus.attending) {
+          transaction.update(eventRef, {'attendeeCount': attendeeCount + 1});
+        }
+
+        return rsvpModel;
+      });
+    } catch (e) {
+      if (e is EventNotFoundException) rethrow;
+      throw EventRsvpException('Failed to create RSVP: $e');
+    }
+  }
+
+  /// Delete an RSVP using a Firestore transaction
+  /// Atomically deletes RSVP and decrements attendeeCount if user was attending
+  Future<void> deleteRsvp({
+    required String eventId,
+    required String userId,
+  }) async {
+    try {
+      await _firestore.runTransaction((transaction) async {
+        final eventRef = _firestore.collection(_collectionName).doc(eventId);
+        final rsvpRef = eventRef.collection('rsvps').doc(userId);
+
+        // Read RSVP to check status
+        final rsvpSnapshot = await transaction.get(rsvpRef);
+        if (!rsvpSnapshot.exists) {
+          return; // RSVP doesn't exist, nothing to delete
+        }
+
+        final rsvpData = rsvpSnapshot.data()!;
+        final status = RsvpStatus.values.firstWhere(
+          (e) => e.name == rsvpData['status'],
+        );
+
+        // Delete RSVP document
+        transaction.delete(rsvpRef);
+
+        // Decrement attendeeCount only if user was attending
+        if (status == RsvpStatus.attending) {
+          final eventSnapshot = await transaction.get(eventRef);
+          if (eventSnapshot.exists) {
+            final attendeeCount =
+                eventSnapshot.data()!['attendeeCount'] as int? ?? 0;
+            transaction.update(eventRef, {
+              'attendeeCount': attendeeCount > 0 ? attendeeCount - 1 : 0,
+            });
+          }
+        }
+      });
+    } catch (e) {
+      throw EventRsvpException('Failed to delete RSVP: $e');
+    }
+  }
+
+  /// Get a user's RSVP for an event
+  Future<RsvpEntity?> getRsvp({
+    required String eventId,
+    required String userId,
+  }) async {
+    try {
+      final doc = await _firestore
+          .collection(_collectionName)
+          .doc(eventId)
+          .collection('rsvps')
+          .doc(userId)
+          .get();
+
+      if (!doc.exists) {
+        return null;
+      }
+
+      return RsvpModel.fromFirestore(doc);
+    } catch (e) {
+      throw EventRsvpException('Failed to fetch RSVP: $e');
+    }
+  }
+
+  /// Update an RSVP status (for waitlist upgrade) using a Firestore transaction
+  /// Atomically checks capacity, updates RSVP status, and increments attendeeCount
+  Future<RsvpEntity> updateRsvp({
+    required String eventId,
+    required String userId,
+    required RsvpStatus newStatus,
+  }) async {
+    try {
+      return await _firestore.runTransaction<RsvpEntity>((transaction) async {
+        final eventRef = _firestore.collection(_collectionName).doc(eventId);
+        final rsvpRef = eventRef.collection('rsvps').doc(userId);
+
+        // Read event and RSVP
+        final eventSnapshot = await transaction.get(eventRef);
+        final rsvpSnapshot = await transaction.get(rsvpRef);
+
+        if (!eventSnapshot.exists) {
+          throw EventNotFoundException(eventId);
+        }
+
+        if (!rsvpSnapshot.exists) {
+          throw EventRsvpException('RSVP not found for user $userId');
+        }
+
+        final eventData = eventSnapshot.data()!;
+        final capacity = eventData['capacity'] as int?;
+        final attendeeCount = eventData['attendeeCount'] as int? ?? 0;
+
+        // Check capacity if upgrading to attending
+        if (newStatus == RsvpStatus.attending) {
+          if (capacity != null && attendeeCount >= capacity) {
+            throw EventRsvpException('Event is at full capacity');
+          }
+        }
+
+        final rsvpData = rsvpSnapshot.data()!;
+        final oldStatus = RsvpStatus.values.firstWhere(
+          (e) => e.name == rsvpData['status'],
+        );
+
+        // Update RSVP document
+        final updatedRsvp = RsvpModel(
+          userId: userId,
+          eventId: eventId,
+          status: newStatus,
+          createdAt: (rsvpData['createdAt'] as Timestamp).toDate(),
+          updatedAt: DateTime.now(),
+        );
+
+        transaction.update(rsvpRef, updatedRsvp.toFirestore());
+
+        // Update attendeeCount if status changed from waitlisted to attending
+        if (oldStatus == RsvpStatus.waitlisted &&
+            newStatus == RsvpStatus.attending) {
+          transaction.update(eventRef, {'attendeeCount': attendeeCount + 1});
+        }
+
+        return updatedRsvp;
+      });
+    } catch (e) {
+      if (e is EventNotFoundException || e is EventRsvpException) rethrow;
+      throw EventRsvpException('Failed to update RSVP: $e');
     }
   }
 }

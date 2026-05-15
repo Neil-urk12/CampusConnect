@@ -1,4 +1,5 @@
 import '../domain/entities/event_entity.dart';
+import '../domain/entities/rsvp_entity.dart';
 import '../domain/exceptions/event_exceptions.dart';
 import '../domain/repositories/event_repository.dart';
 
@@ -90,5 +91,81 @@ class EventService {
         'Attendee count cannot exceed event capacity',
       );
     }
+  }
+
+  /// Create an RSVP for a user to attend an event
+  /// Automatically determines status (attending or waitlisted) based on capacity
+  Future<RsvpEntity> attendEvent(String eventId, String userId) async {
+    if (eventId.isEmpty) {
+      throw EventValidationException('Event ID cannot be empty');
+    }
+    if (userId.isEmpty) {
+      throw EventValidationException('User ID cannot be empty');
+    }
+
+    // Fetch event to check capacity
+    final event = await getEventById(eventId);
+
+    // Determine initial status based on capacity
+    final status =
+        (event.capacity != null && event.attendeeCount >= event.capacity!)
+        ? RsvpStatus.waitlisted
+        : RsvpStatus.attending;
+
+    return await _repository.createRsvp(
+      eventId: eventId,
+      userId: userId,
+      status: status,
+    );
+  }
+
+  /// Cancel a user's RSVP for an event
+  Future<void> cancelAttendance(String eventId, String userId) async {
+    if (eventId.isEmpty) {
+      throw EventValidationException('Event ID cannot be empty');
+    }
+    if (userId.isEmpty) {
+      throw EventValidationException('User ID cannot be empty');
+    }
+
+    await _repository.deleteRsvp(eventId: eventId, userId: userId);
+  }
+
+  /// Get a user's RSVP status for an event
+  /// Returns null if user has not RSVP'd
+  Future<RsvpEntity?> getUserRsvp(String eventId, String userId) async {
+    if (eventId.isEmpty) {
+      throw EventValidationException('Event ID cannot be empty');
+    }
+    if (userId.isEmpty) {
+      throw EventValidationException('User ID cannot be empty');
+    }
+
+    return await _repository.getRsvp(eventId: eventId, userId: userId);
+  }
+
+  /// Upgrade a waitlisted user to attending status
+  /// Throws EventRsvpException if event is at capacity
+  Future<RsvpEntity> upgradeFromWaitlist(String eventId, String userId) async {
+    if (eventId.isEmpty) {
+      throw EventValidationException('Event ID cannot be empty');
+    }
+    if (userId.isEmpty) {
+      throw EventValidationException('User ID cannot be empty');
+    }
+
+    // Fetch event to check capacity
+    final event = await getEventById(eventId);
+
+    // Check if capacity is available
+    if (event.capacity != null && event.attendeeCount >= event.capacity!) {
+      throw EventRsvpException('Event is at full capacity');
+    }
+
+    return await _repository.updateRsvp(
+      eventId: eventId,
+      userId: userId,
+      newStatus: RsvpStatus.attending,
+    );
   }
 }

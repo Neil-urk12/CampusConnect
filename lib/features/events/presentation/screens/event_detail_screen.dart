@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/theme/design_tokens.dart';
+import '../../../../providers/auth_providers.dart';
 import '../../domain/entities/event_entity.dart';
+import '../../domain/entities/rsvp_entity.dart';
+import '../../domain/exceptions/event_exceptions.dart';
 import '../../providers/event_providers.dart';
 
 class EventDetailScreen extends ConsumerWidget {
@@ -62,7 +66,7 @@ class EventDetailScreen extends ConsumerWidget {
   ) {
     return Container(
       height: 200,
-      color: _getCategoryColor(category).withOpacity(0.2),
+      color: _getCategoryColor(category).withValues(alpha: 0.2),
       child: Center(
         child: Icon(
           _getCategoryIcon(category),
@@ -86,9 +90,201 @@ class EventDetailScreen extends ConsumerWidget {
     }
   }
 
+  /// Build action button based on user's RSVP status and event capacity
+  Widget _buildActionButton(
+    BuildContext context,
+    WidgetRef ref,
+    EventEntity event,
+    RsvpEntity? userRsvp,
+    bool isAuthenticated,
+  ) {
+    // Unauthenticated users
+    if (!isAuthenticated) {
+      return _buildButton(
+        context,
+        label: 'Sign in to RSVP',
+        onPressed: () {
+          Navigator.pushNamed(context, '/login');
+        },
+        style: _ButtonStyle.outlined,
+      );
+    }
+
+    final isFull =
+        event.capacity != null && event.attendeeCount >= event.capacity!;
+
+    // User has no RSVP
+    if (userRsvp == null) {
+      if (isFull) {
+        // No RSVP + full capacity -> Join Waitlist
+        return _buildButton(
+          context,
+          label: 'Join Waitlist',
+          onPressed: () => _attendEvent(context, ref, event.id),
+          style: _ButtonStyle.secondary,
+        );
+      } else {
+        // No RSVP + capacity available -> Attend Event
+        return _buildButton(
+          context,
+          label: 'Attend Event',
+          onPressed: () => _attendEvent(context, ref, event.id),
+          style: _ButtonStyle.primary,
+        );
+      }
+    }
+
+    // User has RSVP
+    if (userRsvp.status == RsvpStatus.attending) {
+      // Attending -> Cancel Attendance
+      return _buildButton(
+        context,
+        label: 'Cancel Attendance',
+        onPressed: () => _cancelAttendance(context, ref, event.id),
+        style: _ButtonStyle.outlined,
+      );
+    } else {
+      // Waitlisted
+      if (isFull) {
+        // Waitlisted + full capacity -> Leave Waitlist
+        return _buildButton(
+          context,
+          label: 'Leave Waitlist',
+          onPressed: () => _cancelAttendance(context, ref, event.id),
+          style: _ButtonStyle.outlined,
+        );
+      } else {
+        // Waitlisted + capacity available -> Attend Now
+        return _buildButton(
+          context,
+          label: 'Attend Now',
+          onPressed: () => _upgradeFromWaitlist(context, ref, event.id),
+          style: _ButtonStyle.primary,
+        );
+      }
+    }
+  }
+
+  /// Attend event handler
+  Future<void> _attendEvent(
+    BuildContext context,
+    WidgetRef ref,
+    String eventId,
+  ) async {
+    try {
+      final currentUser = ref.read(currentUserProvider);
+      if (currentUser == null) return;
+
+      final service = ref.read(eventServiceProvider);
+      final rsvp = await service.attendEvent(eventId, currentUser.userId);
+
+      if (context.mounted) {
+        final message = rsvp.status == RsvpStatus.attending
+            ? 'You\'re attending this event!'
+            : 'You\'ve been added to the waitlist';
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+        // Invalidate providers to refresh UI
+        ref.invalidate(userRsvpProvider(eventId));
+        ref.invalidate(eventByIdProvider(eventId));
+      }
+    } on EventRsvpException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to RSVP. Please try again.')),
+        );
+      }
+    }
+  }
+
+  /// Cancel attendance handler
+  Future<void> _cancelAttendance(
+    BuildContext context,
+    WidgetRef ref,
+    String eventId,
+  ) async {
+    try {
+      final currentUser = ref.read(currentUserProvider);
+      if (currentUser == null) return;
+
+      final service = ref.read(eventServiceProvider);
+      await service.cancelAttendance(eventId, currentUser.userId);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Your RSVP has been cancelled')),
+        );
+        // Invalidate providers to refresh UI
+        ref.invalidate(userRsvpProvider(eventId));
+        ref.invalidate(eventByIdProvider(eventId));
+      }
+    } on EventRsvpException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to cancel RSVP. Please try again.'),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Upgrade from waitlist handler
+  Future<void> _upgradeFromWaitlist(
+    BuildContext context,
+    WidgetRef ref,
+    String eventId,
+  ) async {
+    try {
+      final currentUser = ref.read(currentUserProvider);
+      if (currentUser == null) return;
+
+      final service = ref.read(eventServiceProvider);
+      await service.upgradeFromWaitlist(eventId, currentUser.userId);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You\'re now attending this event!')),
+        );
+        // Invalidate providers to refresh UI
+        ref.invalidate(userRsvpProvider(eventId));
+        ref.invalidate(eventByIdProvider(eventId));
+      }
+    } on EventRsvpException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to upgrade from waitlist. Please try again.'),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final eventAsync = ref.watch(eventByIdProvider(eventId));
+    final userRsvpAsync = ref.watch(userRsvpProvider(eventId));
+    final currentUser = ref.watch(currentUserProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Event Details')),
@@ -125,7 +321,7 @@ class EventDetailScreen extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: _getCategoryColor(
                           event.category,
-                        ).withOpacity(0.2),
+                        ).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
@@ -219,6 +415,27 @@ class EventDetailScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 24),
 
+                    // RSVP Action Button
+                    userRsvpAsync.when(
+                      data: (userRsvp) => _buildActionButton(
+                        context,
+                        ref,
+                        event,
+                        userRsvp,
+                        currentUser != null,
+                      ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (error, stack) => _buildActionButton(
+                        context,
+                        ref,
+                        event,
+                        null,
+                        currentUser != null,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
                     // Description
                     Text(
                       'About',
@@ -257,4 +474,68 @@ class EventDetailScreen extends ConsumerWidget {
       ),
     );
   }
+
+  /// Build styled button with design tokens
+  Widget _buildButton(
+    BuildContext context, {
+    required String label,
+    required VoidCallback onPressed,
+    required _ButtonStyle style,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: AnimatedScale(
+        scale: 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: _getButtonStyle(context, style),
+          child: Padding(
+            padding: const EdgeInsets.all(DesignTokens.spacing16),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Plus Jakarta Sans',
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  ButtonStyle _getButtonStyle(BuildContext context, _ButtonStyle style) {
+    switch (style) {
+      case _ButtonStyle.primary:
+        return ElevatedButton.styleFrom(
+          backgroundColor: DesignTokens.primary,
+          foregroundColor: DesignTokens.onPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+          ),
+          elevation: 0,
+        );
+      case _ButtonStyle.secondary:
+        return ElevatedButton.styleFrom(
+          backgroundColor: DesignTokens.secondaryContainer,
+          foregroundColor: DesignTokens.onSecondaryContainer,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+          ),
+          elevation: 0,
+        );
+      case _ButtonStyle.outlined:
+        return OutlinedButton.styleFrom(
+          foregroundColor: DesignTokens.primary,
+          side: const BorderSide(color: DesignTokens.primary),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+          ),
+        );
+    }
+  }
 }
+
+enum _ButtonStyle { primary, secondary, outlined }

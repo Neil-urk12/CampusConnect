@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../providers/auth_providers.dart';
 import '../application/event_service.dart';
 import '../data/datasources/firestore_event_datasource.dart';
 import '../data/repositories/event_repository_impl.dart';
 import '../domain/entities/event_entity.dart';
+import '../domain/entities/rsvp_entity.dart';
 import '../domain/repositories/event_repository.dart';
 
 // Datasource provider
@@ -47,6 +49,22 @@ final allUpcomingEventsProvider = FutureProvider<List<EventEntity>>((
 ) async {
   final service = ref.watch(eventServiceProvider);
   return await service.getAllUpcomingEvents();
+});
+
+// Provider for fetching user's RSVP status for an event
+final userRsvpProvider = FutureProvider.family<RsvpEntity?, String>((
+  ref,
+  eventId,
+) async {
+  final currentUser = ref.watch(currentUserProvider);
+
+  // Return null if user is not authenticated
+  if (currentUser == null) {
+    return null;
+  }
+
+  final service = ref.watch(eventServiceProvider);
+  return await service.getUserRsvp(eventId, currentUser.userId);
 });
 
 // State class for event screen
