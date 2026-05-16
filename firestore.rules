@@ -126,6 +126,21 @@ service cloud.firestore {
       return hasAllFields && creatorMatches && creatorInMembers;
     }
     
+    // Helper function to check if user is joining a public chat
+    function isJoiningPublicChat() {
+      // Check if the chat is public
+      let isPublic = resource.data.isPublic == true;
+      
+      // Check if only memberIds and updatedAt fields are being updated
+      let onlyMembersChanged = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'updatedAt']);
+      
+      // Check if user is adding themselves to memberIds
+      let addingSelf = request.auth.uid in request.resource.data.memberIds && 
+                       !(request.auth.uid in resource.data.memberIds);
+      
+      return isPublic && onlyMembersChanged && addingSelf;
+    }
+    
     // Group chats collection rules
     match /groupChats/{chatId} {
       // Allow read access if user is a member OR the chat is public
@@ -134,8 +149,10 @@ service cloud.firestore {
       // Allow creation if user is the creator and in memberIds
       allow create: if isValidGroupChatCreation();
       
-      // Allow updates only if user is a member (for adding members, updating metadata)
-      allow update: if isChatMember(resource.data);
+      // Allow updates if:
+      // 1. User is a member (for updating metadata, adding other members)
+      // 2. User is joining a public chat (adding themselves to memberIds)
+      allow update: if isChatMember(resource.data) || isJoiningPublicChat();
       
       // Allow deletion only by the creator
       allow delete: if isChatCreator(resource.data);
@@ -246,8 +263,10 @@ service cloud.firestore {
       // Owner can delete their own resource
       allow delete: if isAuthenticated() && resource.data.uploadedBy == request.auth.uid;
 
-      // Immutable — no updates allowed
-      allow update: if false;
+      // Allow authenticated users to increment downloadCount only
+      // All other fields remain immutable — matches events.attendeeCount pattern
+      allow update: if isAuthenticated()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['downloadCount']);
     }
     
     // Deny all other access by default
