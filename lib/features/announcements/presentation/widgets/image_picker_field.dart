@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:appwrite/appwrite.dart';
-import '../../../../services/appwrite_storage_service.dart';
+import '../../../../attachments/domain/attachment_types.dart';
+import '../../../../attachments/providers/attachment_providers.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../providers/announcement_form_provider.dart';
 
@@ -17,7 +17,6 @@ class ImagePickerField extends ConsumerStatefulWidget {
 
 class _ImagePickerFieldState extends ConsumerState<ImagePickerField> {
   final ImagePicker _picker = ImagePicker();
-  final AppwriteStorageService _storageService = AppwriteStorageService();
 
   // 45MB file size limit
   static const int maxFileSizeBytes = 45 * 1024 * 1024;
@@ -102,11 +101,20 @@ class _ImagePickerFieldState extends ConsumerState<ImagePickerField> {
         return;
       }
 
-      final fileId = ID.unique();
-      final attachmentUrl = await _storageService.uploadAnnouncementImage(
-        file: InputFile.fromPath(path: file.path),
-        fileId: fileId,
+      final attachmentService = ref.read(attachmentServiceProvider);
+      final draft = await attachmentService.prepareImage(
+        owner: AttachmentOwnerRef(
+          type: AttachmentOwnerType.announcement,
+          ownerId: 'announcement_${DateTime.now().microsecondsSinceEpoch}',
+        ),
+        image: AttachmentInput.image(
+          bytes: await file.readAsBytes(),
+          fileName: _selectedImage!.name,
+          mimeType: _selectedImage!.mimeType ?? 'image/jpeg',
+          sizeBytes: fileSize,
+        ),
       );
+      final attachmentUrl = draft.metadata.url;
 
       // Update form state with attachment URL
       ref

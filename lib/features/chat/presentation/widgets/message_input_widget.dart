@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:appwrite/appwrite.dart';
+import '../../../../attachments/domain/attachment_types.dart';
 import '../../../../providers/auth_providers.dart';
-import '../../../../services/appwrite_storage_service.dart';
+import '../../../../attachments/providers/attachment_providers.dart';
 import '../../providers/message_provider.dart';
 
 /// Widget for composing and sending messages with optional image attachments.
@@ -20,7 +20,6 @@ class MessageInputWidget extends ConsumerStatefulWidget {
 class _MessageInputWidgetState extends ConsumerState<MessageInputWidget> {
   final TextEditingController _controller = TextEditingController();
   final ImagePicker _picker = ImagePicker();
-  final AppwriteStorageService _storageService = AppwriteStorageService();
 
   // 45MB file size limit
   static const int maxFileSizeBytes = 45 * 1024 * 1024;
@@ -102,14 +101,13 @@ class _MessageInputWidgetState extends ConsumerState<MessageInputWidget> {
       _isSending = true;
     });
 
+    AttachmentDraft? attachmentDraft;
+
     try {
       String? attachmentUrl;
 
-      // Upload image if selected
       if (_selectedImage != null) {
         final file = File(_selectedImage!.path);
-
-        // Double-check file size before upload
         final fileSize = await file.length();
         if (fileSize > maxFileSizeBytes) {
           if (mounted) {
@@ -126,14 +124,23 @@ class _MessageInputWidgetState extends ConsumerState<MessageInputWidget> {
           return;
         }
 
-        final fileId = ID.unique();
-        attachmentUrl = await _storageService.uploadChatImage(
-          file: InputFile.fromPath(path: file.path),
-          fileId: fileId,
+        final attachmentService = ref.read(attachmentServiceProvider);
+        attachmentDraft = await attachmentService.prepareImage(
+          owner: AttachmentOwnerRef(
+            type: AttachmentOwnerType.message,
+            ownerId:
+                '${widget.chatId}_${DateTime.now().microsecondsSinceEpoch}',
+          ),
+          image: AttachmentInput.image(
+            bytes: await file.readAsBytes(),
+            fileName: _selectedImage!.name,
+            mimeType: _selectedImage!.mimeType ?? 'image/jpeg',
+            sizeBytes: fileSize,
+          ),
         );
+        attachmentUrl = attachmentDraft.metadata.url;
       }
 
-      // Send message
       final messageService = ref.read(messageServiceProvider);
       await messageService.sendMessage(
         chatId: widget.chatId,
@@ -143,21 +150,25 @@ class _MessageInputWidgetState extends ConsumerState<MessageInputWidget> {
         attachmentUrl: attachmentUrl,
       );
 
-      // Clear input
       _controller.clear();
       setState(() {
         _selectedImage = null;
       });
     } catch (e) {
+      if (attachmentDraft != null) {
+        await attachmentDraft.rollback();
+      }
       if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Failed to send message: $e')));
       }
     } finally {
-      setState(() {
-        _isSending = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
     }
   }
 

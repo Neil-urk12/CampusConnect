@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:appwrite/appwrite.dart';
-import '../../../../services/appwrite_storage_service.dart';
+import '../../../../attachments/domain/attachment_types.dart';
+import '../../../../attachments/providers/attachment_providers.dart';
 import '../../domain/entities/group_chat.dart';
 import '../../providers/group_chat_provider.dart';
 
@@ -87,13 +87,20 @@ class _EditGroupChatBottomSheetState
     if (_selectedImage == null) return null;
 
     try {
-      final storageService = AppwriteStorageService();
-      final fileId = ID.unique();
-
-      final avatarUrl = await storageService.uploadChatImage(
-        file: InputFile.fromPath(path: _selectedImage!.path),
-        fileId: fileId,
+      final attachmentService = ref.read(attachmentServiceProvider);
+      final draft = await attachmentService.prepareReplacementImage(
+        owner: AttachmentOwnerRef(
+          type: AttachmentOwnerType.group,
+          ownerId: widget.groupChat.id,
+        ),
+        image: AttachmentInput.image(
+          bytes: await _selectedImage!.readAsBytes(),
+          fileName: _selectedImage!.path.split('/').last,
+          mimeType: 'image/jpeg',
+          sizeBytes: await _selectedImage!.length(),
+        ),
       );
+      final avatarUrl = draft.metadata.url;
 
       return avatarUrl;
     } catch (e) {

@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:appwrite/appwrite.dart';
+import '../../../../attachments/domain/attachment_types.dart';
+import '../../../../attachments/providers/attachment_providers.dart';
 import '../../../../providers/auth_providers.dart';
-import '../../../../services/appwrite_storage_service.dart';
 import '../../providers/group_chat_provider.dart';
 
 /// Bottom sheet for creating a new group chat.
@@ -72,13 +72,21 @@ class _CreateGroupChatBottomSheetState
     if (_selectedImage == null) return null;
 
     try {
-      final storageService = AppwriteStorageService();
-      final fileId = ID.unique();
-
-      final avatarUrl = await storageService.uploadChatImage(
-        file: InputFile.fromPath(path: _selectedImage!.path),
-        fileId: fileId,
+      final attachmentService = ref.read(attachmentServiceProvider);
+      final file = File(_selectedImage!.path);
+      final draft = await attachmentService.prepareImage(
+        owner: AttachmentOwnerRef(
+          type: AttachmentOwnerType.group,
+          ownerId: 'group_${DateTime.now().microsecondsSinceEpoch}',
+        ),
+        image: AttachmentInput.image(
+          bytes: await file.readAsBytes(),
+          fileName: _selectedImage!.path.split('/').last,
+          mimeType: 'image/jpeg',
+          sizeBytes: await file.length(),
+        ),
       );
+      final avatarUrl = draft.metadata.url;
 
       return avatarUrl;
     } catch (e) {
