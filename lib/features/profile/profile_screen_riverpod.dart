@@ -4,35 +4,33 @@ import '../../auth/domain/entities/user_entity.dart';
 import '../../auth/domain/user_display_name.dart';
 import '../../providers/auth_providers.dart';
 import 'edit_personal_info_screen.dart';
+import '../../core/theme/design_tokens.dart';
 
 class ProfileScreenRiverpod extends ConsumerWidget {
   const ProfileScreenRiverpod({super.key});
 
-  final Color primaryDarkBlue = const Color(0xFF091C31);
-  final Color secondaryTeal = const Color(0xFF007A75);
-  final Color fieldBackground = const Color(0xFFF3F4F6);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateNotifierProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: DesignTokens.surfaceContainerLowest,
       appBar: AppBar(
         title: Text(
           "My Profile",
           style: TextStyle(
-            color: primaryDarkBlue,
+            color: DesignTokens.primary,
             fontWeight: FontWeight.bold,
             fontSize: 22,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: DesignTokens.surfaceContainerLowest,
         elevation: 0,
         centerTitle: false,
         actions: [
           IconButton(
-            icon: Icon(Icons.logout, color: primaryDarkBlue),
+            icon: Icon(Icons.logout, color: DesignTokens.primary),
             onPressed: () async {
               final authService = ref.read(authServiceProvider);
               await authService.signOut();
@@ -54,7 +52,7 @@ class ProfileScreenRiverpod extends ConsumerWidget {
     UserEntity user,
   ) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(DesignTokens.spacing24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -66,29 +64,29 @@ class ProfileScreenRiverpod extends ConsumerWidget {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: secondaryTeal.withValues(alpha: 0.1),
+                    color: DesignTokens.secondary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.person, size: 50, color: secondaryTeal),
+                  child: Icon(Icons.person, size: 50, color: DesignTokens.secondary),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: DesignTokens.spacing16),
                 Text(
                   user.displayName,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: primaryDarkBlue,
+                    color: DesignTokens.primary,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: DesignTokens.spacing4),
                 Text(
                   user.email,
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 14, color: DesignTokens.onSurfaceVariant),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: DesignTokens.spacing32),
 
           // Profile Options
           _buildProfileOption(
@@ -105,7 +103,7 @@ class ProfileScreenRiverpod extends ConsumerWidget {
               );
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: DesignTokens.spacing12),
           _buildProfileOption(
             context,
             icon: Icons.lock_outline,
@@ -117,7 +115,7 @@ class ProfileScreenRiverpod extends ConsumerWidget {
               );
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: DesignTokens.spacing12),
           _buildProfileOption(
             context,
             icon: Icons.notifications_none,
@@ -131,7 +129,7 @@ class ProfileScreenRiverpod extends ConsumerWidget {
               );
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: DesignTokens.spacing12),
           _buildProfileOption(
             context,
             icon: Icons.help_outline,
@@ -143,7 +141,7 @@ class ProfileScreenRiverpod extends ConsumerWidget {
               );
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: DesignTokens.spacing12),
           _buildProfileOption(
             context,
             icon: Icons.info_outline,
@@ -158,7 +156,7 @@ class ProfileScreenRiverpod extends ConsumerWidget {
               );
             },
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: DesignTokens.spacing32),
 
           // Sign Out Button
           ElevatedButton(
@@ -167,9 +165,9 @@ class ProfileScreenRiverpod extends ConsumerWidget {
               await authService.signOut();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade50,
-              foregroundColor: Colors.red.shade700,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: DesignTokens.errorContainer,
+              foregroundColor: DesignTokens.onErrorContainer,
+              padding: const EdgeInsets.symmetric(vertical: DesignTokens.spacing16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -179,7 +177,7 @@ class ProfileScreenRiverpod extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.logout, size: 20),
-                SizedBox(width: 8),
+                SizedBox(width: DesignTokens.spacing8),
                 Text(
                   'Sign Out',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -203,9 +201,9 @@ class ProfileScreenRiverpod extends ConsumerWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(DesignTokens.spacing16),
         decoration: BoxDecoration(
-          color: fieldBackground,
+          color: DesignTokens.surfaceContainerLow,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -213,12 +211,12 @@ class ProfileScreenRiverpod extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: DesignTokens.surfaceContainerLowest,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: secondaryTeal, size: 24),
+              child: Icon(icon, color: DesignTokens.secondary, size: 24),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: DesignTokens.spacing16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,13 +226,13 @@ class ProfileScreenRiverpod extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: primaryDarkBlue,
+                      color: DesignTokens.primary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 13, color: DesignTokens.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -242,7 +240,7 @@ class ProfileScreenRiverpod extends ConsumerWidget {
             Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: Colors.grey.shade400,
+              color: DesignTokens.outlineVariant,
             ),
           ],
         ),

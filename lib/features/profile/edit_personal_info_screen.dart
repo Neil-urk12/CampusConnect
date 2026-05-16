@@ -7,6 +7,7 @@ import '../../auth/domain/user_display_name.dart';
 import '../../auth/domain/validators/auth_validator.dart';
 import '../../providers/auth_providers.dart';
 import '../../core/widgets/widgets.dart';
+import '../../core/theme/design_tokens.dart';
 
 class EditPersonalInfoScreen extends ConsumerStatefulWidget {
   final UserEntity user;
@@ -20,8 +21,6 @@ class EditPersonalInfoScreen extends ConsumerStatefulWidget {
 
 class _EditPersonalInfoScreenState
     extends ConsumerState<EditPersonalInfoScreen> {
-  final Color primaryDarkBlue = const Color(0xFF091C31);
-
   late final TextEditingController _fullNameController;
   late final TextEditingController _studentIdController;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -87,7 +86,7 @@ class _EditPersonalInfoScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile updated successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: DesignTokens.secondary,
           ),
         );
       }
@@ -112,27 +111,27 @@ class _EditPersonalInfoScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: DesignTokens.surfaceContainerLowest,
       appBar: AppBar(
         title: Text(
           'Personal Information',
           style: TextStyle(
-            color: primaryDarkBlue,
+            color: DesignTokens.primary,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: DesignTokens.surfaceContainerLowest,
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: primaryDarkBlue),
+          icon: Icon(Icons.arrow_back, color: DesignTokens.primary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spacing24, vertical: DesignTokens.spacing16),
           child: Form(
             key: _formKey,
             child: Column(
@@ -141,42 +140,42 @@ class _EditPersonalInfoScreenState
                 Center(
                   child: CircleAvatar(
                     radius: 60,
-                    backgroundColor: primaryDarkBlue.withValues(alpha: 0.1),
+                    backgroundColor: DesignTokens.primary.withValues(alpha: 0.1),
                     child: Text(
                       widget.user.displayName[0].toUpperCase(),
                       style: TextStyle(
                         fontSize: 48,
                         fontWeight: FontWeight.bold,
-                        color: primaryDarkBlue,
+                        color: DesignTokens.primary,
                       ),
                     ),
                   ),
                 ),
-                SizedBox(height: 32),
+                SizedBox(height: DesignTokens.spacing32),
 
                 if (_errorMessage != null) ...[
                   ErrorContainer(
                     message: _errorMessage!,
                     type: MessageType.error,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: DesignTokens.spacing16),
                 ],
 
                 FormLabel(text: 'Email Address'),
-                const SizedBox(height: 8),
+                const SizedBox(height: DesignTokens.spacing8),
                 _buildReadOnlyField(
                   icon: Icons.email_outlined,
                   value: widget.user.email,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: DesignTokens.spacing4),
                 Text(
                   'Email cannot be changed',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  style: TextStyle(fontSize: 11, color: DesignTokens.onSurfaceVariant),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: DesignTokens.spacing24),
 
                 FormLabel(text: 'Full Name'),
-                const SizedBox(height: 8),
+                const SizedBox(height: DesignTokens.spacing8),
                 FormInputField(
                   controller: _fullNameController,
                   hintText: 'Enter your full name',
@@ -190,10 +189,10 @@ class _EditPersonalInfoScreenState
                     );
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: DesignTokens.spacing24),
 
                 FormLabel(text: 'Student ID'),
-                const SizedBox(height: 8),
+                const SizedBox(height: DesignTokens.spacing8),
                 FormInputField(
                   controller: _studentIdController,
                   hintText: 'Enter your student ID',
@@ -211,7 +210,7 @@ class _EditPersonalInfoScreenState
                   onPressed: _isLoading ? null : _handleSave,
                   isLoading: _isLoading,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: DesignTokens.spacing16),
 
                 SecondaryButton(
                   text: 'Cancel',
@@ -227,22 +226,22 @@ class _EditPersonalInfoScreenState
 
   Widget _buildReadOnlyField({required IconData icon, required String value}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spacing16, vertical: DesignTokens.spacing16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: DesignTokens.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.grey.shade500, size: 20),
-          const SizedBox(width: 12),
+          Icon(icon, color: DesignTokens.onSurfaceVariant, size: 20),
+          const SizedBox(width: DesignTokens.spacing12),
           Expanded(
             child: Text(
               value,
-              style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 15, color: DesignTokens.onSurfaceVariant),
             ),
           ),
-          Icon(Icons.lock_outline, color: Colors.grey.shade400, size: 18),
+          Icon(Icons.lock_outline, color: DesignTokens.outlineVariant, size: 18),
         ],
       ),
     );
