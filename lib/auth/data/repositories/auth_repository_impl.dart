@@ -13,6 +13,7 @@ import '../data_sources/firebase_auth_data_source.dart';
 /// - User sign-in with metadata loading
 /// - User registration (auth account creation only)
 /// - Password reset
+/// - Password change with reauthentication
 /// - Sign out
 /// - Current user retrieval with metadata
 /// - Authentication state change streams

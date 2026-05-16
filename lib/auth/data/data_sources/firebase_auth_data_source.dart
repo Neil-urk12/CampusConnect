@@ -121,6 +121,21 @@ class FirebaseAuthDataSource {
     }
   }
 
+  /// Updates the user's password after reauthenticating with the current one.
+  ///
+  /// Process:
+  /// 1. Retrieves the currently authenticated Firebase user
+  /// 2. Reauthenticates using the current password via [EmailAuthProvider]
+  /// 3. Updates the password to the new value
+  ///
+  /// This two-step process ensures the user genuinely knows the current
+  /// password before allowing a change, protecting against session hijacking.
+  ///
+  /// Throws:
+  /// - [FirebaseAuthException] with code 'user-not-found' if no user is signed in
+  /// - [FirebaseAuthException] with code 'invalid-email' if user email is unavailable
+  /// - [FirebaseAuthException] with code 'wrong-password' if current password is incorrect
+  /// - [FirebaseAuthException] with code 'weak-password' if new password is too short
   Future<void> updatePassword({
     required String currentPassword,
     required String newPassword,

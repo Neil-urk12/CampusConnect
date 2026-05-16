@@ -206,6 +206,18 @@ class AuthService {
     }
   }
 
+  /// Changes the user's password after validating current and new passwords.
+  ///
+  /// Validates the current password with a 6-character minimum (supporting
+  /// legacy accounts) and the new password with an 8-character minimum
+  /// for stronger security. Also ensures the new password differs from the
+  /// current one.
+  ///
+  /// Throws:
+  /// - [AuthException] with field 'currentPassword' if current password is invalid
+  /// - [AuthException] with field 'newPassword' if new password is invalid
+  /// - [AuthException] if the current password is incorrect
+  /// - [AuthException] for network or service errors
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
