@@ -46,6 +46,11 @@ class _AnnouncementDetailScreenState
       appBar: AppBar(
         backgroundColor: AppTheme.neutral,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          color: primaryColor,
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           'Announcement',
           style: GoogleFonts.plusJakartaSans(
