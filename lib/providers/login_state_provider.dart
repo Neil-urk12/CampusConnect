@@ -1,8 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/domain/exceptions/auth_exception.dart';
-import '../auth/domain/exceptions/network_exception.dart';
-import '../auth/domain/exceptions/service_exception.dart';
-import '../auth/domain/exceptions/validation_exception.dart';
 import '../auth/presentation/utils/error_message_mapper.dart';
 import 'auth_providers.dart';
 
@@ -35,25 +32,10 @@ class LoginNotifier extends Notifier<LoginState> {
       await authService.signIn(email: email, password: password);
       // Success - authStateNotifierProvider updates from Firebase auth changes.
       state = state.copyWith(isLoading: false);
-    } on ValidationException catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: ErrorMessageMapper.mapValidationException(e),
-      );
     } on AuthException catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: ErrorMessageMapper.mapAuthException(e),
-      );
-    } on NetworkException catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: ErrorMessageMapper.mapNetworkException(e),
-      );
-    } on ServiceException catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: ErrorMessageMapper.mapServiceException(e),
+        errorMessage: ErrorMessageMapper.map(e),
       );
     } catch (e) {
       state = state.copyWith(

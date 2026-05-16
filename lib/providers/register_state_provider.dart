@@ -1,9 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/domain/exceptions/auth_exception.dart';
-import '../auth/domain/exceptions/validation_exception.dart';
-import '../auth/domain/exceptions/network_exception.dart';
-import '../auth/domain/exceptions/service_exception.dart';
-import '../auth/domain/exceptions/user_exception.dart';
 import '../auth/presentation/utils/error_message_mapper.dart';
 import 'auth_providers.dart';
 
@@ -58,38 +54,10 @@ class RegisterNotifier extends Notifier<RegisterState> {
 
       state = state.copyWith(isLoading: false, isSuccess: true);
       return true;
-    } on ValidationException catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: ErrorMessageMapper.mapValidationException(e),
-        isSuccess: false,
-      );
-      return false;
     } on AuthException catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: ErrorMessageMapper.mapAuthException(e),
-        isSuccess: false,
-      );
-      return false;
-    } on UserException catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: ErrorMessageMapper.mapUserException(e),
-        isSuccess: false,
-      );
-      return false;
-    } on NetworkException catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: ErrorMessageMapper.mapNetworkException(e),
-        isSuccess: false,
-      );
-      return false;
-    } on ServiceException catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: ErrorMessageMapper.mapServiceException(e),
+        errorMessage: ErrorMessageMapper.map(e),
         isSuccess: false,
       );
       return false;

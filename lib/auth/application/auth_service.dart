@@ -1,9 +1,5 @@
 import '../domain/entities/user_entity.dart';
 import '../domain/exceptions/auth_exception.dart';
-import '../domain/exceptions/network_exception.dart';
-import '../domain/exceptions/service_exception.dart';
-import '../domain/exceptions/user_exception.dart';
-import '../domain/exceptions/validation_exception.dart';
 import '../domain/repositories/auth_repository.dart';
 import '../domain/repositories/user_repository.dart';
 import '../domain/validators/auth_validator.dart';
@@ -27,14 +23,8 @@ class AuthService {
       return await _authRepository.getCurrentUser();
     } on AuthException {
       rethrow;
-    } on UserException {
-      rethrow;
-    } on NetworkException {
-      rethrow;
-    } on ServiceException {
-      rethrow;
     } catch (e) {
-      throw AuthException('An unexpected error occurred: ${e.toString()}');
+      throw AuthException(message: e.toString());
     }
   }
 
@@ -45,30 +35,22 @@ class AuthService {
     try {
       final emailError = AuthValidator.validateEmail(email);
       if (emailError != null) {
-        throw ValidationException(emailError, 'email');
+        throw AuthException(code: AuthException.validationError, message: emailError, field: 'email');
       }
 
       final passwordError = AuthValidator.validatePassword(password);
       if (passwordError != null) {
-        throw ValidationException(passwordError, 'password');
+        throw AuthException(code: AuthException.validationError, message: passwordError, field: 'password');
       }
 
       return await _authRepository.signIn(
         email: email.trim(),
         password: password,
       );
-    } on ValidationException {
-      rethrow;
     } on AuthException {
       rethrow;
-    } on UserException {
-      rethrow;
-    } on NetworkException {
-      rethrow;
-    } on ServiceException {
-      rethrow;
     } catch (e) {
-      throw AuthException('An unexpected error occurred: ${e.toString()}');
+      throw AuthException(message: e.toString());
     }
   }
 
@@ -84,22 +66,22 @@ class AuthService {
         'Full name',
       );
       if (fullNameError != null) {
-        throw ValidationException(fullNameError, 'fullName');
+        throw AuthException(code: AuthException.validationError, message: fullNameError, field: 'fullName');
       }
 
       final emailError = AuthValidator.validateEmail(email);
       if (emailError != null) {
-        throw ValidationException(emailError, 'email');
+        throw AuthException(code: AuthException.validationError, message: emailError, field: 'email');
       }
 
       final studentIdError = AuthValidator.validateStudentId(studentId);
       if (studentIdError != null) {
-        throw ValidationException(studentIdError, 'studentId');
+        throw AuthException(code: AuthException.validationError, message: studentIdError, field: 'studentId');
       }
 
       final passwordError = AuthValidator.validatePassword(password);
       if (passwordError != null) {
-        throw ValidationException(passwordError, 'password');
+        throw AuthException(code: AuthException.validationError, message: passwordError, field: 'password');
       }
 
       final userId = await _authRepository.register(
@@ -116,22 +98,14 @@ class AuthService {
 
       final user = await _authRepository.getCurrentUser();
       if (user == null) {
-        throw AuthException('Failed to retrieve user after registration');
+        throw AuthException(code: AuthException.internalError, message: 'Failed to retrieve user after registration');
       }
 
       return user;
-    } on ValidationException {
-      rethrow;
     } on AuthException {
       rethrow;
-    } on UserException {
-      rethrow;
-    } on NetworkException {
-      rethrow;
-    } on ServiceException {
-      rethrow;
     } catch (e) {
-      throw AuthException('An unexpected error occurred: ${e.toString()}');
+      throw AuthException(message: e.toString());
     }
   }
 
@@ -140,14 +114,8 @@ class AuthService {
       await _authRepository.signOut();
     } on AuthException {
       rethrow;
-    } on NetworkException {
-      rethrow;
-    } on ServiceException {
-      rethrow;
     } catch (e) {
-      throw AuthException(
-        'An unexpected error occurred during sign out: ${e.toString()}',
-      );
+      throw AuthException(message: 'An unexpected error occurred during sign out: ${e.toString()}');
     }
   }
 
@@ -155,20 +123,14 @@ class AuthService {
     try {
       final emailError = AuthValidator.validateEmail(email);
       if (emailError != null) {
-        throw ValidationException(emailError, 'email');
+        throw AuthException(code: AuthException.validationError, message: emailError, field: 'email');
       }
 
       await _authRepository.sendPasswordResetEmail(email: email.trim());
-    } on ValidationException {
-      rethrow;
     } on AuthException {
       rethrow;
-    } on NetworkException {
-      rethrow;
-    } on ServiceException {
-      rethrow;
     } catch (e) {
-      throw AuthException('An unexpected error occurred: ${e.toString()}');
+      throw AuthException(message: e.toString());
     }
   }
 
@@ -179,12 +141,12 @@ class AuthService {
   }) async {
     final fullNameError = AuthValidator.validateRequired(fullName, 'Full name');
     if (fullNameError != null) {
-      throw ValidationException(fullNameError, 'fullName');
+      throw AuthException(code: AuthException.validationError, message: fullNameError, field: 'fullName');
     }
 
     final studentIdError = AuthValidator.validateStudentId(studentId);
     if (studentIdError != null) {
-      throw ValidationException(studentIdError, 'studentId');
+      throw AuthException(code: AuthException.validationError, message: studentIdError, field: 'studentId');
     }
 
     try {
@@ -192,10 +154,10 @@ class AuthService {
         userId: userId,
         updates: {'fullName': fullName.trim(), 'studentId': studentId.trim()},
       );
-    } on UserException {
+    } on AuthException {
       rethrow;
     } catch (e) {
-      throw UserException('Failed to update profile: ${e.toString()}');
+      throw AuthException(code: AuthException.userDataError, message: 'Failed to update profile: ${e.toString()}');
     }
   }
 }

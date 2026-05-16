@@ -1,7 +1,7 @@
 import '../../../core/utils/app_logger.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/user_entity.dart';
-import '../../domain/exceptions/user_exception.dart';
+import '../../domain/exceptions/auth_exception.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../data_sources/firestore_user_data_source.dart';
 import '../models/user_model.dart';
@@ -14,7 +14,7 @@ import '../models/user_model.dart';
 /// - User metadata retrieval for authenticated users
 /// - User metadata updates (profile changes, group memberships)
 ///
-/// All Firestore exceptions are mapped to domain-specific UserExceptions
+/// All Firestore exceptions are mapped to domain-specific AuthExceptions
 /// with user-friendly error messages.
 ///
 /// Requirements: 1.5, 2.5, 7.1, 7.2, 7.3, 7.4, 7.5, 10.3
@@ -38,9 +38,9 @@ class UserRepositoryImpl implements UserRepository {
   /// - updatedAt: Document last update timestamp
   ///
   /// Throws:
-  /// - [UserException] if document creation fails
-  /// - [UserException] if user already exists
-  /// - [UserException] if permission is denied
+  /// - [AuthException] if document creation fails
+  /// - [AuthException] if user already exists
+  /// - [AuthException] if permission is denied
   ///
   /// Requirements: 1.5, 7.1, 7.2, 7.4
   @override
@@ -65,7 +65,7 @@ class UserRepositoryImpl implements UserRepository {
       AppLogger.debug(
         'UserRepository: Metadata created successfully for userId: $userId',
       );
-    } on UserException {
+    } on AuthException {
       rethrow;
     } on FirebaseException catch (e) {
       AppLogger.debug(
@@ -78,7 +78,7 @@ class UserRepositoryImpl implements UserRepository {
         'UserRepository: Unexpected error creating metadata',
         error: e,
       );
-      throw UserException('Failed to create user metadata: ${e.toString()}');
+      throw AuthException(message: 'Failed to create user metadata: ${e.toString()}');
     }
   }
 
@@ -93,9 +93,9 @@ class UserRepositoryImpl implements UserRepository {
   /// (e.g., by prompting profile completion or re-authentication).
   ///
   /// Throws:
-  /// - [UserException] if Firestore read fails
-  /// - [UserException] if permission is denied
-  /// - [UserException] if document data is malformed
+  /// - [AuthException] if Firestore read fails
+  /// - [AuthException] if permission is denied
+  /// - [AuthException] if document data is malformed
   ///
   /// Requirements: 2.5, 7.3, 7.5
   @override
@@ -122,7 +122,7 @@ class UserRepositoryImpl implements UserRepository {
       );
 
       return userEntity;
-    } on UserException {
+    } on AuthException {
       rethrow;
     } on FirebaseException catch (e) {
       AppLogger.debug(
@@ -135,16 +135,13 @@ class UserRepositoryImpl implements UserRepository {
         'UserRepository: Document format error for userId: $userId',
         error: e,
       );
-      throw UserException(
-        'User data is malformed. Please contact support.',
-        code: 'invalid-data',
-      );
+      throw AuthException(code: AuthException.userDataError, message: 'User data is malformed. Please contact support.');
     } catch (e) {
       AppLogger.debug(
         'UserRepository: Unexpected error fetching metadata',
         error: e,
       );
-      throw UserException('Failed to fetch user metadata: ${e.toString()}');
+      throw AuthException(message: 'Failed to fetch user metadata: ${e.toString()}');
     }
   }
 
@@ -170,9 +167,9 @@ class UserRepositoryImpl implements UserRepository {
   /// ```
   ///
   /// Throws:
-  /// - [UserException] if the document doesn't exist
-  /// - [UserException] if Firestore update fails
-  /// - [UserException] if permission is denied
+  /// - [AuthException] if the document doesn't exist
+  /// - [AuthException] if Firestore update fails
+  /// - [AuthException] if permission is denied
   ///
   /// Requirements: 7.3, 7.5, 10.3
   @override
@@ -192,7 +189,7 @@ class UserRepositoryImpl implements UserRepository {
       AppLogger.debug(
         'UserRepository: Metadata updated successfully for userId: $userId',
       );
-    } on UserException {
+    } on AuthException {
       rethrow;
     } on FirebaseException catch (e) {
       AppLogger.debug(
@@ -205,7 +202,7 @@ class UserRepositoryImpl implements UserRepository {
         'UserRepository: Unexpected error updating metadata',
         error: e,
       );
-      throw UserException('Failed to update user metadata: ${e.toString()}');
+      throw AuthException(message: 'Failed to update user metadata: ${e.toString()}');
     }
   }
 
@@ -215,98 +212,71 @@ class UserRepositoryImpl implements UserRepository {
   /// - userId: Immutable identifier
   /// - createdAt: Should never change after creation
   ///
-  /// Throws [UserException] if protected fields are present in updates.
+  /// Throws [AuthException] if protected fields are present in updates.
   void _validateUpdates(Map<String, dynamic> updates) {
     const protectedFields = ['userId', 'createdAt'];
 
     for (final field in protectedFields) {
       if (updates.containsKey(field)) {
-        throw UserException(
-          'Cannot update protected field: $field',
-          code: 'invalid-update',
-        );
+        throw AuthException(code: AuthException.invalidArgument, message: 'Cannot update protected field: $field');
       }
     }
   }
 
-  /// Maps Firestore exceptions to domain-specific UserExceptions.
+  /// Maps Firestore exceptions to domain-specific AuthExceptions.
   ///
   /// This provides consistent error handling across all Firestore operations
   /// and translates Firebase error codes into user-friendly messages that
   /// match the design document specifications.
   ///
   /// Requirements: 7.5, 10.3
-  UserException _mapFirestoreException(FirebaseException e, String operation) {
+  AuthException _mapFirestoreException(FirebaseException e, String operation) {
     switch (e.code) {
       case 'permission-denied':
-        return UserException(
-          'Access denied. Please sign in again.',
-          code: e.code,
-        );
+        return AuthException(code: AuthException.permissionDenied, message: 'Access denied. Please sign in again.');
 
       case 'not-found':
-        return UserException('User data not found.', code: e.code);
+        return AuthException(code: AuthException.notFound, message: 'User data not found.');
 
       case 'unavailable':
-        return UserException(
-          'Service temporarily unavailable. Please try again.',
-          code: e.code,
-        );
+        return AuthException(code: AuthException.unavailable, message: 'Service temporarily unavailable. Please try again.');
 
       case 'deadline-exceeded':
-        return UserException(
-          'Request timed out. Please check your connection.',
-          code: e.code,
-        );
+        return AuthException(code: AuthException.deadlineExceeded, message: 'Request timed out. Please check your connection.');
 
       case 'already-exists':
-        return UserException('User already exists.', code: e.code);
+        return AuthException(code: AuthException.alreadyExists, message: 'User already exists.');
 
       case 'resource-exhausted':
-        return UserException(
-          'Too many requests. Please try again later.',
-          code: e.code,
-        );
+        return AuthException(code: AuthException.resourceExhausted, message: 'Too many requests. Please try again later.');
 
       case 'cancelled':
-        return UserException('Operation was cancelled.', code: e.code);
+        return AuthException(code: AuthException.cancelled, message: 'Operation was cancelled.');
 
       case 'data-loss':
       case 'internal':
-        return UserException(
-          'Internal error occurred. Please try again.',
-          code: e.code,
-        );
+        return AuthException(code: AuthException.internalError, message: 'Internal error occurred. Please try again.');
 
       case 'invalid-argument':
-        return UserException('Invalid data provided.', code: e.code);
+        return AuthException(code: AuthException.invalidArgument, message: 'Invalid data provided.');
 
       case 'failed-precondition':
-        return UserException(
-          'Operation cannot be performed in current state.',
-          code: e.code,
-        );
+        return AuthException(code: AuthException.failedPrecondition, message: 'Operation cannot be performed in current state.');
 
       case 'aborted':
-        return UserException(
-          'Operation was aborted. Please try again.',
-          code: e.code,
-        );
+        return AuthException(code: AuthException.aborted, message: 'Operation was aborted. Please try again.');
 
       case 'out-of-range':
-        return UserException('Invalid data range.', code: e.code);
+        return AuthException(code: AuthException.invalidArgument, message: 'Invalid data range.');
 
       case 'unimplemented':
-        return UserException('This operation is not supported.', code: e.code);
+        return AuthException(code: 'unexpected', message: 'This operation is not supported.');
 
       default:
         AppLogger.debug(
           'Unmapped Firestore error code: ${e.code}',
         );
-        return UserException(
-          'Failed to $operation: ${e.message ?? "Unknown error"}',
-          code: e.code,
-        );
+        return AuthException(code: AuthException.userDataError, message: 'Failed to $operation: ${e.message ?? "Unknown error"}');
     }
   }
 }

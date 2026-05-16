@@ -2,9 +2,6 @@ import '../../../core/utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/exceptions/auth_exception.dart';
-import '../../domain/exceptions/network_exception.dart';
-import '../../domain/exceptions/service_exception.dart';
-import '../../domain/exceptions/validation_exception.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../data_sources/firebase_auth_data_source.dart';
@@ -39,8 +36,8 @@ class AuthRepositoryImpl implements AuthRepository {
   ///
   /// Throws:
   /// - [AuthException] for invalid credentials or authentication failures
-  /// - [NetworkException] for network connectivity issues
-  /// - [ServiceException] for Firebase service unavailability
+  /// - [AuthException] for network connectivity issues
+  /// - [AuthException] for Firebase service unavailability
   ///
   @override
   Future<UserEntity> signIn({
@@ -58,7 +55,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       if (credential.user == null) {
-        throw const AuthException('Sign in failed: No user returned');
+        throw const AuthException(message: 'Sign in failed: No user returned');
       }
 
       final userId = credential.user!.uid;
@@ -73,9 +70,7 @@ class AuthRepositoryImpl implements AuthRepository {
         AppLogger.debug(
           'AuthRepository: User metadata not found for userId: $userId',
         );
-        throw const AuthException(
-          'User data not found. Please contact support.',
-        );
+        throw const AuthException(message: 'User data not found. Please contact support.');
       }
 
       AppLogger.debug(
@@ -91,16 +86,12 @@ class AuthRepositoryImpl implements AuthRepository {
       throw _mapFirebaseAuthException(e);
     } on AuthException {
       rethrow;
-    } on NetworkException {
-      rethrow;
-    } on ServiceException {
-      rethrow;
     } catch (e) {
       AppLogger.debug(
         'AuthRepository: Unexpected error during sign in',
         error: e,
       );
-      throw AuthException('Sign in failed: ${e.toString()}');
+      throw AuthException(message: 'Sign in failed: ${e.toString()}');
     }
   }
 
@@ -114,9 +105,9 @@ class AuthRepositoryImpl implements AuthRepository {
   ///
   /// Throws:
   /// - [AuthException] for registration failures (e.g., email already exists)
-  /// - [ValidationException] for invalid email or weak password
-  /// - [NetworkException] for network connectivity issues
-  /// - [ServiceException] for Firebase service unavailability
+  /// - [AuthException] for invalid email or weak password
+  /// - [AuthException] for network connectivity issues
+  /// - [AuthException] for Firebase service unavailability
   @override
   Future<String> register({
     required String email,
@@ -133,7 +124,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       if (credential.user == null) {
-        throw const AuthException('Registration failed: No user returned');
+        throw const AuthException(message: 'Registration failed: No user returned');
       }
 
       final userId = credential.user!.uid;
@@ -151,18 +142,12 @@ class AuthRepositoryImpl implements AuthRepository {
       throw _mapFirebaseAuthException(e);
     } on AuthException {
       rethrow;
-    } on ValidationException {
-      rethrow;
-    } on NetworkException {
-      rethrow;
-    } on ServiceException {
-      rethrow;
     } catch (e) {
       AppLogger.debug(
         'AuthRepository: Unexpected error during registration',
         error: e,
       );
-      throw AuthException('Registration failed: ${e.toString()}');
+      throw AuthException(message: 'Registration failed: ${e.toString()}');
     }
   }
 
@@ -196,7 +181,7 @@ class AuthRepositoryImpl implements AuthRepository {
         'AuthRepository: Unexpected error during sign out',
         error: e,
       );
-      throw AuthException('Sign out failed: ${e.toString()}');
+      throw AuthException(message: 'Sign out failed: ${e.toString()}');
     }
   }
 
@@ -208,7 +193,7 @@ class AuthRepositoryImpl implements AuthRepository {
   ///
   /// Throws:
   /// - [AuthException] if the operation fails
-  /// - [NetworkException] for network connectivity issues
+  /// - [AuthException] for network connectivity issues
   @override
   Future<void> sendPasswordResetEmail({required String email}) async {
     try {
@@ -227,16 +212,12 @@ class AuthRepositoryImpl implements AuthRepository {
         error: e,
       );
       throw _mapFirebaseAuthException(e);
-    } on NetworkException {
-      rethrow;
     } catch (e) {
       AppLogger.debug(
         'AuthRepository: Unexpected error sending password reset email',
         error: e,
       );
-      throw AuthException(
-        'Failed to send password reset email: ${e.toString()}',
-      );
+      throw AuthException(message: 'Failed to send password reset email: ${e.toString()}');
     }
   }
 
@@ -347,81 +328,48 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   /// Maps Firebase Authentication exceptions to domain exceptions.
-  Exception _mapFirebaseAuthException(FirebaseAuthException e) {
+  AuthException _mapFirebaseAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
       case 'wrong-password':
-        return const AuthException(
-          'Invalid email or password.',
-          code: 'invalid-credentials',
-        );
+        return const AuthException(code: AuthException.invalidCredentials, message: 'Invalid email or password.');
 
       case 'invalid-email':
-        return const ValidationException(
-          'Please enter a valid email address.',
-          'email',
-        );
+        return const AuthException(code: AuthException.validationError, message: 'Please enter a valid email address.', field: 'email');
 
       case 'user-disabled':
-        return const AuthException(
-          'This account has been disabled. Please contact support.',
-          code: 'user-disabled',
-        );
+        return const AuthException(code: AuthException.userDisabled, message: 'This account has been disabled. Please contact support.');
 
       case 'email-already-in-use':
-        return const AuthException(
-          'This email is already registered. Please sign in instead.',
-          code: 'email-already-in-use',
-        );
+        return const AuthException(code: AuthException.emailAlreadyInUse, message: 'This email is already registered. Please sign in instead.');
 
       case 'weak-password':
-        return const ValidationException(
-          'Password must be at least 6 characters long.',
-          'password',
-        );
+        return const AuthException(code: AuthException.validationError, message: 'Password must be at least 6 characters long.', field: 'password');
 
       case 'too-many-requests':
-        return const AuthException(
-          'Too many failed attempts. Please try again later.',
-          code: 'too-many-requests',
-        );
+        return const AuthException(code: AuthException.tooManyRequests, message: 'Too many failed attempts. Please try again later.');
 
       case 'network-request-failed':
-        return const NetworkException(
-          'Network error. Please check your connection.',
-        );
+        return const AuthException(code: AuthException.networkError, message: 'Network error. Please check your connection.');
 
       case 'operation-not-allowed':
-        return const ServiceException(
-          'This operation is not allowed. Please contact support.',
-        );
+        return const AuthException(code: AuthException.operationNotAllowed, message: 'This operation is not allowed. Please contact support.');
 
       case 'internal-error':
-        return const ServiceException(
-          'An internal error occurred. Please try again.',
-        );
+        return const AuthException(code: AuthException.serviceError, message: 'An internal error occurred. Please try again.');
 
       case 'invalid-credential':
-        return const AuthException(
-          'Invalid credentials provided.',
-          code: 'invalid-credential',
-        );
+        return const AuthException(code: AuthException.invalidCredentials, message: 'Invalid credentials provided.');
 
       case 'user-token-expired':
       case 'requires-recent-login':
-        return const AuthException(
-          'Your session has expired. Please sign in again.',
-          code: 'session-expired',
-        );
+        return const AuthException(code: AuthException.sessionExpired, message: 'Your session has expired. Please sign in again.');
 
       default:
         AppLogger.debug(
           'Unmapped Firebase auth error code: ${e.code}',
         );
-        return AuthException(
-          'An unexpected error occurred. Please try again.',
-          code: e.code,
-        );
+        return AuthException(code: e.code, message: 'An unexpected error occurred. Please try again.');
     }
   }
 }

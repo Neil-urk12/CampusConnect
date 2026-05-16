@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/domain/entities/user_entity.dart';
-import '../../auth/domain/exceptions/user_exception.dart';
-import '../../auth/domain/exceptions/validation_exception.dart';
+import '../../auth/domain/exceptions/auth_exception.dart';
 import '../../auth/domain/user_display_name.dart';
 import '../../auth/domain/validators/auth_validator.dart';
 import '../../providers/auth_providers.dart';
@@ -90,10 +89,8 @@ class _EditPersonalInfoScreenState
           ),
         );
       }
-    } on ValidationException catch (e) {
-      _showError(e.message);
-    } on UserException catch (e) {
-      _showError(e.message);
+    } on AuthException catch (e) {
+      _showError(e.message.isNotEmpty ? e.message : 'An unexpected error occurred.');
     } catch (e) {
       _showError('Failed to update profile: ${e.toString()}');
     }

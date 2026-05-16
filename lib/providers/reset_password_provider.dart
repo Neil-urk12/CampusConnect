@@ -1,8 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../auth/domain/exceptions/validation_exception.dart';
 import '../auth/domain/exceptions/auth_exception.dart';
-import '../auth/domain/exceptions/network_exception.dart';
-import '../auth/domain/exceptions/service_exception.dart';
 import '../auth/presentation/utils/error_message_mapper.dart';
 import 'auth_providers.dart';
 
@@ -54,28 +51,10 @@ class ResetPasswordNotifier extends Notifier<ResetPasswordState> {
         isSuccess: true,
         errorMessage: null,
       );
-    } on ValidationException catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: ErrorMessageMapper.mapValidationException(e),
-        isSuccess: false,
-      );
     } on AuthException catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: ErrorMessageMapper.mapAuthException(e),
-        isSuccess: false,
-      );
-    } on NetworkException catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: ErrorMessageMapper.mapNetworkException(e),
-        isSuccess: false,
-      );
-    } on ServiceException catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: ErrorMessageMapper.mapServiceException(e),
+        errorMessage: ErrorMessageMapper.map(e),
         isSuccess: false,
       );
     } catch (e) {
