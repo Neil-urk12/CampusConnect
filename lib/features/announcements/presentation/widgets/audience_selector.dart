@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/announcement_form_provider.dart';
+import '../../../../core/theme/design_tokens.dart';
 
 /// Widget for selecting target audience roles
 class AudienceSelector extends ConsumerWidget {
@@ -29,16 +30,16 @@ class AudienceSelector extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFFE0F2F1),
+            color: DesignTokens.secondaryContainer,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFF007A75).withOpacity(0.3)),
+            border: Border.all(color: DesignTokens.secondary.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
               Icon(
                 Icons.info_outline,
                 size: 16,
-                color: const Color(0xFF007A75),
+                color: DesignTokens.secondary,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -46,7 +47,7 @@ class AudienceSelector extends ConsumerWidget {
                   'Note: Administrators and moderators always see all announcements',
                   style: TextStyle(
                     fontSize: 11,
-                    color: const Color(0xFF007A75),
+                    color: DesignTokens.onSecondaryContainer,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

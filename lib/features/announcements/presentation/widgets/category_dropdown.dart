@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/categories_provider.dart';
 import '../providers/announcement_form_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/theme/design_tokens.dart';
 
 /// Dropdown widget for selecting announcement category
 class CategoryDropdown extends ConsumerWidget {
@@ -68,7 +69,7 @@ class CategoryDropdown extends ConsumerWidget {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF007A75),
+              backgroundColor: DesignTokens.secondary,
               foregroundColor: Colors.white,
             ),
             child: const Text('Create'),
@@ -207,8 +208,8 @@ class CategoryDropdown extends ConsumerWidget {
               icon: const Icon(Icons.add),
               label: const Text('Create New Category'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF007A75),
-                side: const BorderSide(color: Color(0xFF007A75)),
+                foregroundColor: DesignTokens.secondary,
+                side: const BorderSide(color: DesignTokens.secondary),
               ),
             ),
           ],
@@ -237,8 +238,8 @@ class CategoryDropdown extends ConsumerWidget {
                 icon: const Icon(Icons.add),
                 label: const Text('Create New Category'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF007A75),
-                  side: const BorderSide(color: Color(0xFF007A75)),
+                  foregroundColor: DesignTokens.secondary,
+                  side: const BorderSide(color: DesignTokens.secondary),
                 ),
               ),
             ],

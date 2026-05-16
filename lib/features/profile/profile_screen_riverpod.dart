@@ -64,10 +64,10 @@ class ProfileScreenRiverpod extends ConsumerWidget {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: DesignTokens.secondary.withValues(alpha: 0.1),
+                    color: DesignTokens.surfaceTint.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.person, size: 50, color: DesignTokens.secondary),
+                  child: Icon(Icons.person, size: 50, color: DesignTokens.surfaceTint),
                 ),
                 const SizedBox(height: DesignTokens.spacing16),
                 Text(
@@ -214,7 +214,7 @@ class ProfileScreenRiverpod extends ConsumerWidget {
                 color: DesignTokens.surfaceContainerLowest,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: DesignTokens.secondary, size: 24),
+              child: Icon(icon, color: DesignTokens.surfaceTint, size: 24),
             ),
             const SizedBox(width: DesignTokens.spacing16),
             Expanded(

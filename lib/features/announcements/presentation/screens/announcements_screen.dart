@@ -7,6 +7,7 @@ import '../widgets/urgent_announcement_card.dart';
 import '../widgets/pinned_announcement_card.dart';
 import '../../../../app/routes.dart';
 import '../../../../providers/auth_providers.dart';
+import '../../../../core/theme/design_tokens.dart';
 
 class AnnouncementsScreen extends ConsumerWidget {
   const AnnouncementsScreen({super.key});
@@ -31,14 +32,14 @@ class AnnouncementsScreen extends ConsumerWidget {
         seedColor: const Color(0xFF003366),
         primary: const Color(0xFF003366),
         onPrimary: Colors.white,
-        secondary: const Color(0xFF008080),
-        onSecondary: Colors.white,
+        secondary: DesignTokens.secondary,
+        onSecondary: DesignTokens.onSecondary,
         tertiary: const Color(0xFF4DB6AC),
         onTertiary: Colors.white,
-        surface: Colors.white,
+        surface: DesignTokens.surfaceContainerLowest,
         onSurface: const Color(0xFF1E1E1E),
-        surfaceContainerHighest: const Color(0xFFE9ECEF),
-        outline: const Color(0xFFDEE2E6),
+        surfaceContainerHighest: DesignTokens.surfaceContainerHigh,
+        outline: DesignTokens.outlineVariant,
       ),
       textTheme: TextTheme(
         headlineLarge: GoogleFonts.plusJakartaSans(

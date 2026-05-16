@@ -11,6 +11,7 @@ import 'providers/auth_providers.dart';
 import 'appwrite_test_helper.dart';
 import 'auth/domain/user_display_name.dart';
 import 'core/widgets/widgets.dart';
+import '../core/theme/design_tokens.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -73,7 +74,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNavItem(int index, IconData icon, String label) {
     bool isSelected = _selectedIndex == index;
-    Color primaryTeal = const Color(0xFF007A75);
 
     return GestureDetector(
       onTap: () => _onItemTapped(index),
@@ -91,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected ? primaryTeal : Colors.grey.shade400,
+              color: isSelected ? DesignTokens.secondary : Colors.grey.shade400,
               size: 24,
             ),
             const SizedBox(height: 4),
@@ -100,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? primaryTeal : Colors.grey.shade400,
+                color: isSelected ? DesignTokens.secondary : Colors.grey.shade400,
               ),
             ),
           ],
@@ -124,7 +124,6 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
 
   final Color textDark = const Color(0xFF1F2937);
   final Color primaryDarkBlue = const Color(0xFF091C31);
-  final Color secondaryTeal = const Color(0xFF007A75);
 
   Future<void> _sendPing() async {
     setState(() {
@@ -424,11 +423,11 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: secondaryTeal,
+                          color: DesignTokens.secondary,
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Icon(Icons.arrow_forward, color: secondaryTeal, size: 16),
+                      Icon(Icons.arrow_forward, color: DesignTokens.secondary, size: 16),
                     ],
                   ),
                 ],
@@ -761,7 +760,7 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF007A75),
+                        color: DesignTokens.secondary,
                         letterSpacing: 1.0,
                       ),
                     ),
