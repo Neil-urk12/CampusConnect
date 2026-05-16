@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum AttachmentOwnerType { message, announcement, group }
+enum AttachmentOwnerType { message, announcement, group, event }
 
 enum AttachmentKind { image }
 
