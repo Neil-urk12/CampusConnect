@@ -69,7 +69,9 @@ class _EditGroupChatBottomSheetState
       if (image != null) {
         setState(() {
           _selectedImage = File(image.path);
-          _currentAvatarUrl = null; // Clear current URL when new image selected
+          // Intentionally do NOT clear _currentAvatarUrl here.
+          // If the upload fails we keep the existing URL so the avatar is not
+          // silently deleted.
         });
       }
     } catch (e) {
@@ -112,10 +114,16 @@ class _EditGroupChatBottomSheetState
     setState(() => _isLoading = true);
 
     try {
-      // Upload new avatar if selected
+      // Upload new avatar if a new image was picked; keep existing URL otherwise.
       String? avatarUrl = _currentAvatarUrl;
       if (_selectedImage != null) {
-        avatarUrl = await _uploadAvatar();
+        final uploadedUrl = await _uploadAvatar();
+        // Only swap in the new URL when the upload actually succeeded.
+        if (uploadedUrl != null) {
+          avatarUrl = uploadedUrl;
+        }
+        // On upload failure avatarUrl stays as _currentAvatarUrl — the old
+        // avatar is preserved.
       }
 
       final service = ref.read(groupChatServiceProvider);
@@ -219,6 +227,7 @@ class _EditGroupChatBottomSheetState
                         clipBehavior: Clip.antiAlias,
                         child: _buildAvatarPreview(),
                       ),
+                      // Show remove button only when there is an image to remove
                       if (_selectedImage != null || _currentAvatarUrl != null)
                         Positioned(
                           top: 0,
@@ -244,23 +253,28 @@ class _EditGroupChatBottomSheetState
                             ),
                           ),
                         ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.teal[700],
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            size: 16,
-                            color: Colors.white,
+                      // Camera overlay — shown when a new image is picked so the
+                      // user can swap it without saving first. Hidden when showing
+                      // only the existing URL or the empty placeholder, matching
+                      // the create-sheet UX.
+                      if (_selectedImage != null)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.teal[700],
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              size: 16,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
