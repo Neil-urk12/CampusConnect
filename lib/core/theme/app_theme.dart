@@ -1,3 +1,5 @@
+import 'package:google_fonts/google_fonts.dart';
+
 import 'package:flutter/material.dart';
 
 /// Primary (#003366), Secondary (#00796B), Tertiary (#4DB6AC), and Neutral (#F8F9FA) colors.
@@ -223,78 +225,78 @@ class AppTheme {
       ),
 
       // Text Theme
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
+      textTheme: TextTheme(
+        displayLarge: GoogleFonts.plusJakartaSans(
           fontSize: 57,
           fontWeight: FontWeight.w400,
           color: textPrimary,
         ),
-        displayMedium: TextStyle(
+        displayMedium: GoogleFonts.plusJakartaSans(
           fontSize: 45,
           fontWeight: FontWeight.w400,
           color: textPrimary,
         ),
-        displaySmall: TextStyle(
+        displaySmall: GoogleFonts.plusJakartaSans(
           fontSize: 36,
           fontWeight: FontWeight.w400,
           color: textPrimary,
         ),
-        headlineLarge: TextStyle(
+        headlineLarge: GoogleFonts.plusJakartaSans(
           fontSize: 32,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
-        headlineMedium: TextStyle(
+        headlineMedium: GoogleFonts.plusJakartaSans(
           fontSize: 28,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
-        headlineSmall: TextStyle(
+        headlineSmall: GoogleFonts.plusJakartaSans(
           fontSize: 24,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
-        titleLarge: TextStyle(
+        titleLarge: GoogleFonts.plusJakartaSans(
           fontSize: 22,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
-        titleMedium: TextStyle(
+        titleMedium: GoogleFonts.plusJakartaSans(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
-        titleSmall: TextStyle(
+        titleSmall: GoogleFonts.plusJakartaSans(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
-        bodyLarge: TextStyle(
+        bodyLarge: GoogleFonts.manrope(
           fontSize: 16,
           fontWeight: FontWeight.w400,
           color: textPrimary,
         ),
-        bodyMedium: TextStyle(
+        bodyMedium: GoogleFonts.manrope(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: textPrimary,
         ),
-        bodySmall: TextStyle(
+        bodySmall: GoogleFonts.manrope(
           fontSize: 12,
           fontWeight: FontWeight.w400,
           color: textSecondary,
         ),
-        labelLarge: TextStyle(
+        labelLarge: GoogleFonts.manrope(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
-        labelMedium: TextStyle(
+        labelMedium: GoogleFonts.manrope(
           fontSize: 12,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
-        labelSmall: TextStyle(
+        labelSmall: GoogleFonts.manrope(
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: textSecondary,
