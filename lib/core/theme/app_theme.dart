@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// Primary (#003366), Secondary (#008080), Tertiary (#4DB6AC), and Neutral (#F8F9FA) colors.
+/// Primary (#003366), Secondary (#00796B), Tertiary (#4DB6AC), and Neutral (#F8F9FA) colors.
 class AppTheme {
   // Private constructor to prevent instantiation
   AppTheme._();
 
   // Color Palette
   static const Color primary = Color(0xFF003366);
-  static const Color secondary = Color(0xFF008080);
+  static const Color secondary = Color(0xFF00796B);
   static const Color tertiary = Color(0xFF4DB6AC);
   static const Color neutral = Color(0xFFF8F9FA);
 
@@ -16,8 +16,8 @@ class AppTheme {
   static const Color primaryLight = Color(0xFF336699);
 
   // Secondary color shades
-  static const Color secondaryDark = Color(0xFF004d4d);
-  static const Color secondaryLight = Color(0xFF33a3a3);
+  static const Color secondaryDark = Color(0xFF004D40);
+  static const Color secondaryLight = Color(0xFF4DB6AC);
 
   // Tertiary color shades
   static const Color tertiaryDark = Color(0xFF26a69a);

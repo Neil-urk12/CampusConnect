@@ -492,7 +492,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? DesignTokens.secondaryContainer
+              ? DesignTokens.primary
               : DesignTokens.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
         ),
@@ -501,9 +501,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
           style: GoogleFonts.manrope(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: isSelected
-                ? DesignTokens.onSecondaryContainer
-                : DesignTokens.onSurface,
+            color: isSelected ? DesignTokens.onPrimary : DesignTokens.onSurface,
           ),
         ),
       ),

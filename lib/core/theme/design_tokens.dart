@@ -9,18 +9,18 @@ class DesignTokens {
   static const onPrimary = Color(0xFFFFFFFF);
   static const onPrimaryContainer = Color(0xFFD4E3FF);
 
-  static const secondary = Color(0xFF00B4B4);
-  static const secondaryContainer = Color(0xFF90EFEF);
-  static const onSecondary = Color(0xFF003737);
-  static const onSecondaryContainer = Color(0xFF006E6E);
+  static const secondary = Color(0xFF00796B);
+  static const secondaryContainer = Color(0xFFB2DFDB);
+  static const onSecondary = Color(0xFFFFFFFF);
+  static const onSecondaryContainer = Color(0xFF004D40);
 
   static const tertiary = Color(0xFF006A67);
   static const tertiaryContainer = Color(0xFF003A36);
   static const onTertiary = Color(0xFFFFFFFF);
   static const onTertiaryContainer = Color(0xFF6FF7F2);
 
-  static const secondaryFixed = Color(0xFF93F2F2);
-  static const onSecondaryFixed = Color(0xFF002020);
+  static const secondaryFixed = Color(0xFFB2DFDB);
+  static const onSecondaryFixed = Color(0xFF004D40);
 
   // Surface Hierarchy - "No-Line" Rule
   static const surface = Color(0xFFF8F9FA);
