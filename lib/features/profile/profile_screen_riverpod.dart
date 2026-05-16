@@ -31,10 +31,7 @@ class ProfileScreenRiverpod extends ConsumerWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.logout, color: DesignTokens.primary),
-            onPressed: () async {
-              final authService = ref.read(authServiceProvider);
-              await authService.signOut();
-            },
+            onPressed: () => _showSignOutConfirmation(context, ref),
           ),
         ],
       ),
@@ -167,37 +164,108 @@ class ProfileScreenRiverpod extends ConsumerWidget {
             },
           ),
           const SizedBox(height: DesignTokens.spacing32),
+        ],
+      ),
+    );
+  }
 
-          // Sign Out Button
-          ElevatedButton(
-            onPressed: () async {
-              final authService = ref.read(authServiceProvider);
-              await authService.signOut();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: DesignTokens.errorContainer,
-              foregroundColor: DesignTokens.onErrorContainer,
-              padding: const EdgeInsets.symmetric(
-                vertical: DesignTokens.spacing16,
+  void _showSignOutConfirmation(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(DesignTokens.spacing24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: DesignTokens.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
               ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
             ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            const SizedBox(height: DesignTokens.spacing24),
+            Icon(Icons.logout, size: 48, color: DesignTokens.error),
+            const SizedBox(height: DesignTokens.spacing16),
+            Text(
+              'Sign Out',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: DesignTokens.primary,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.spacing8),
+            Text(
+              'Are you sure you want to sign out?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: DesignTokens.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.spacing24),
+            Row(
               children: [
-                Icon(Icons.logout, size: 20),
-                SizedBox(width: DesignTokens.spacing8),
-                Text(
-                  'Sign Out',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: DesignTokens.spacing16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      side: BorderSide(color: DesignTokens.outlineVariant),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: DesignTokens.primary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: DesignTokens.spacing12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      final authService = ref.read(authServiceProvider);
+                      await authService.signOut();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: DesignTokens.error,
+                      foregroundColor: DesignTokens.onError,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: DesignTokens.spacing16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Sign Out',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: DesignTokens.spacing8),
+          ],
+        ),
       ),
     );
   }

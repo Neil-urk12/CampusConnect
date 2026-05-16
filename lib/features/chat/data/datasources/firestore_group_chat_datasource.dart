@@ -93,8 +93,24 @@ class FirestoreGroupChatDataSource {
   /// Adds members to an existing group chat.
   Future<void> addMembers(String chatId, List<String> memberIds) async {
     try {
+      // For public chats, read the document first to build the full memberIds array
+      // This ensures security rules can validate the update properly
+      final chatDoc = await _firestore
+          .collection('groupChats')
+          .doc(chatId)
+          .get();
+
+      if (!chatDoc.exists) {
+        throw Exception('Group chat not found');
+      }
+
+      final currentMemberIds = List<String>.from(
+        chatDoc.data()?['memberIds'] ?? [],
+      );
+      final newMemberIds = {...currentMemberIds, ...memberIds}.toList();
+
       await _firestore.collection('groupChats').doc(chatId).update({
-        'memberIds': FieldValue.arrayUnion(memberIds),
+        'memberIds': newMemberIds,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
     } catch (e) {
