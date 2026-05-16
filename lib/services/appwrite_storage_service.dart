@@ -185,4 +185,24 @@ class AppwriteStorageService {
       rethrow;
     }
   }
+
+  /// Upload a resource file to the attachments bucket and return the public view URL.
+  Future<String> uploadResourceFile({
+    required InputFile file,
+    required String fileId,
+  }) async {
+    try {
+      final bucketId = AppwriteConfig.resourceAttachmentsBucketId;
+      await uploadFile(
+        bucketId: bucketId,
+        fileId: fileId,
+        file: file,
+        permissions: ['read("any")'],
+      );
+      return getFileView(bucketId: bucketId, fileId: fileId);
+    } catch (e) {
+      AppLogger.error('Failed to upload resource file: $e');
+      rethrow;
+    }
+  }
 }

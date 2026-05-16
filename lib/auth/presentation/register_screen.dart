@@ -45,10 +45,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             password: _passwordController.text,
           );
 
-      if (success && mounted) {}
+      if (success && mounted) {
+        // Pop back to root — auth gate will detect authenticated user
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final registerState = ref.watch(registerProvider);

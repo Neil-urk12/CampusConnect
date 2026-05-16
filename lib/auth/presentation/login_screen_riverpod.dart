@@ -6,6 +6,7 @@ import '../../core/widgets/widgets.dart';
 import 'register_screen.dart';
 import 'reset_password_screen_riverpod.dart';
 import 'login_status_banner.dart';
+import '../../providers/auth_providers.dart';
 
 class LoginScreenRiverpod extends ConsumerStatefulWidget {
   const LoginScreenRiverpod({super.key});
@@ -49,6 +50,23 @@ class _LoginScreenRiverpodState extends ConsumerState<LoginScreenRiverpod> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authStateNotifierProvider, (prev, next) {
+      if (prev?.isUnauthenticated == true && next.isAuthenticated && mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    });
+    ref.listen(loginProvider, (prev, next) {
+      if (prev?.isSuccess == false && next.isSuccess && mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text('Signed in successfully'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+      }
+    });
     final loginState = ref.watch(loginProvider);
 
     return Scaffold(

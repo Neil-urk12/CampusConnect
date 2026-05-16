@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/domain/exceptions/auth_exception.dart';
 import '../auth/presentation/utils/error_message_mapper.dart';
+
 import 'auth_providers.dart';
 
 /// State class for register screen
@@ -52,7 +53,11 @@ class RegisterNotifier extends Notifier<RegisterState> {
         password: password,
       );
 
+      // Refresh auth state so auth gate detects the new user
+      ref.read(authStateNotifierProvider.notifier).refresh();
+
       state = state.copyWith(isLoading: false, isSuccess: true);
+
       return true;
     } on AuthException catch (e) {
       state = state.copyWith(

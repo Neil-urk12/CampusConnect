@@ -8,18 +8,39 @@ class FirestoreGroupChatDataSource {
   FirestoreGroupChatDataSource({FirebaseFirestore? firestore})
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  /// Fetches all group chats where the user is a member.
+  /// Fetches all group chats where the user is a member, plus public chats.
   Future<List<GroupChatModel>> getUserChats(String userId) async {
     try {
-      final querySnapshot = await _firestore
+      // 1. Chats where user is a member
+      final memberQuery = await _firestore
           .collection('groupChats')
           .where('memberIds', arrayContains: userId)
           .orderBy('createdAt', descending: true)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => GroupChatModel.fromFirestore(doc))
-          .toList();
+      // 2. Public chats (isPublic == true) that the user may not have joined yet
+      final publicQuery = await _firestore
+          .collection('groupChats')
+          .where('isPublic', isEqualTo: true)
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      // Merge, deduplicate by doc id, sort by createdAt descending
+      final seenIds = <String>{};
+      final results = <GroupChatModel>[];
+
+      for (final doc in publicQuery.docs) {
+        seenIds.add(doc.id);
+        results.add(GroupChatModel.fromFirestore(doc));
+      }
+      for (final doc in memberQuery.docs) {
+        if (seenIds.add(doc.id)) {
+          results.add(GroupChatModel.fromFirestore(doc));
+        }
+      }
+
+      results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return results;
     } catch (e) {
       throw Exception('Failed to fetch user chats: $e');
     }

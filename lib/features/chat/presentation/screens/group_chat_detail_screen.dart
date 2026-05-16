@@ -8,7 +8,7 @@ import '../widgets/message_bubble.dart';
 import '../widgets/message_input_widget.dart';
 
 /// Screen displaying the message stream for a specific group chat.
-class GroupChatDetailScreen extends ConsumerWidget {
+class GroupChatDetailScreen extends ConsumerStatefulWidget {
   final String chatId;
   final String chatName;
 
@@ -19,14 +19,74 @@ class GroupChatDetailScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final messagesAsync = ref.watch(messagesStreamProvider(chatId));
-    final chatAsync = ref.watch(groupChatByIdProvider(chatId));
+  ConsumerState<GroupChatDetailScreen> createState() =>
+      _GroupChatDetailScreenState();
+}
+
+class _GroupChatDetailScreenState extends ConsumerState<GroupChatDetailScreen> {
+  bool _isJoining = false;
+
+  Future<void> _joinGroupChat() async {
+    final authState = ref.read(authStateNotifierProvider);
+    final user = authState.user;
+
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You must be logged in to join a group chat'),
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isJoining = true;
+    });
+
+    try {
+      final service = ref.read(groupChatServiceProvider);
+      await service.addMembers(widget.chatId, [user.userId]);
+
+      // Refresh the chat data to reflect the new membership
+      ref.invalidate(groupChatByIdProvider(widget.chatId));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully joined the group chat!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to join group chat: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isJoining = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final messagesAsync = ref.watch(messagesStreamProvider(widget.chatId));
+    final chatAsync = ref.watch(groupChatByIdProvider(widget.chatId));
     final authState = ref.watch(authStateNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(chatName),
+        title: Text(widget.chatName),
         actions: [
           chatAsync.when(
             data: (chat) {
@@ -60,25 +120,28 @@ class GroupChatDetailScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Messages list (reverse chronological)
-          Expanded(
-            child: messagesAsync.when(
-              data: (messages) {
-                if (messages.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No messages yet.\nBe the first to send a message!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  );
-                }
+      body: chatAsync.when(
+        data: (chat) {
+          final currentUserId = authState.user?.userId;
+          final isMember =
+              currentUserId != null && chat.memberIds.contains(currentUserId);
 
-                // Get chat creator ID for moderation permissions
-                return chatAsync.when(
-                  data: (chat) {
+          return Column(
+            children: [
+              // Messages list (reverse chronological)
+              Expanded(
+                child: messagesAsync.when(
+                  data: (messages) {
+                    if (messages.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No messages yet.\nBe the first to send a message!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      );
+                    }
+
                     return ListView.builder(
                       reverse: true, // Show newest messages at the bottom
                       padding: const EdgeInsets.all(8.0),
@@ -87,7 +150,7 @@ class GroupChatDetailScreen extends ConsumerWidget {
                         final message = messages[index];
                         return MessageBubble(
                           message: message,
-                          chatId: chatId,
+                          chatId: widget.chatId,
                           chatCreatorId: chat.creatorId,
                         );
                       },
@@ -95,39 +158,118 @@ class GroupChatDetailScreen extends ConsumerWidget {
                   },
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (error, stack) =>
-                      Center(child: Text('Failed to load chat: $error')),
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: Theme.of(context).colorScheme.error,
+                  error: (error, stack) => Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Failed to load messages',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          error.toString(),
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Failed to load messages',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      error.toString(),
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+              // Join button or message input
+              if (!isMember && chat.isPublic)
+                Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isJoining ? null : _joinGroupChat,
+                      icon: _isJoining
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.group_add),
+                      label: Text(
+                        _isJoining ? 'Joining...' : 'Join Group Chat',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                )
+              else if (!isMember && !chat.isPublic)
+                Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'This is a private group. You must be invited to join.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                MessageInputWidget(chatId: widget.chatId),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 48,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load chat',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
           ),
-          // Message input
-          MessageInputWidget(chatId: chatId),
-        ],
+        ),
       ),
     );
   }

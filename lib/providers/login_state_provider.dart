@@ -7,13 +7,15 @@ import 'auth_providers.dart';
 class LoginState {
   final bool isLoading;
   final String? errorMessage;
+  final bool isSuccess;
 
-  const LoginState({this.isLoading = false, this.errorMessage});
+  const LoginState({this.isLoading = false, this.errorMessage, this.isSuccess = false});
 
-  LoginState copyWith({bool? isLoading, String? errorMessage}) {
+  LoginState copyWith({bool? isLoading, String? errorMessage, bool? isSuccess}) {
     return LoginState(
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
+      isSuccess: isSuccess ?? this.isSuccess,
     );
   }
 }
@@ -30,8 +32,11 @@ class LoginNotifier extends Notifier<LoginState> {
     try {
       final authService = ref.read(authServiceProvider);
       await authService.signIn(email: email, password: password);
-      // Success - authStateNotifierProvider updates from Firebase auth changes.
-      state = state.copyWith(isLoading: false);
+
+      // Refresh auth state so auth gate detects the authenticated user
+      ref.read(authStateNotifierProvider.notifier).refresh();
+
+      state = state.copyWith(isLoading: false, isSuccess: true);
     } on AuthException catch (e) {
       state = state.copyWith(
         isLoading: false,
