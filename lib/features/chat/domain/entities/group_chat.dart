@@ -10,6 +10,11 @@ class GroupChat extends Equatable {
   final bool isPublic;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final String? lastMessage;
+  final String? lastMessageSender;
+  final DateTime? lastMessageTime;
+  final int unreadCount;
+  final String? avatarUrl;
 
   const GroupChat({
     required this.id,
@@ -20,6 +25,11 @@ class GroupChat extends Equatable {
     required this.isPublic,
     required this.createdAt,
     this.updatedAt,
+    this.lastMessage,
+    this.lastMessageSender,
+    this.lastMessageTime,
+    this.unreadCount = 0,
+    this.avatarUrl,
   });
 
   @override
@@ -32,5 +42,10 @@ class GroupChat extends Equatable {
     isPublic,
     createdAt,
     updatedAt,
+    lastMessage,
+    lastMessageSender,
+    lastMessageTime,
+    unreadCount,
+    avatarUrl,
   ];
 }

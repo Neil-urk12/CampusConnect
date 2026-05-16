@@ -12,6 +12,11 @@ class GroupChatModel extends GroupChat {
     required super.isPublic,
     required super.createdAt,
     super.updatedAt,
+    super.lastMessage,
+    super.lastMessageSender,
+    super.lastMessageTime,
+    super.unreadCount = 0,
+    super.avatarUrl,
   });
 
   /// Creates a GroupChatModel from a Firestore document snapshot.
@@ -28,6 +33,13 @@ class GroupChatModel extends GroupChat {
       updatedAt: data['updatedAt'] != null
           ? (data['updatedAt'] as Timestamp).toDate()
           : null,
+      lastMessage: data['lastMessage'] as String?,
+      lastMessageSender: data['lastMessageSender'] as String?,
+      lastMessageTime: data['lastMessageTime'] != null
+          ? (data['lastMessageTime'] as Timestamp).toDate()
+          : null,
+      unreadCount: data['unreadCount'] as int? ?? 0,
+      avatarUrl: data['avatarUrl'] as String?,
     );
   }
 
@@ -41,6 +53,13 @@ class GroupChatModel extends GroupChat {
       'isPublic': isPublic,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
+      'lastMessage': lastMessage,
+      'lastMessageSender': lastMessageSender,
+      'lastMessageTime': lastMessageTime != null
+          ? Timestamp.fromDate(lastMessageTime!)
+          : null,
+      'unreadCount': unreadCount,
+      'avatarUrl': avatarUrl,
     };
   }
 
@@ -55,6 +74,11 @@ class GroupChatModel extends GroupChat {
       isPublic: entity.isPublic,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      lastMessage: entity.lastMessage,
+      lastMessageSender: entity.lastMessageSender,
+      lastMessageTime: entity.lastMessageTime,
+      unreadCount: entity.unreadCount,
+      avatarUrl: entity.avatarUrl,
     );
   }
 }

@@ -32,6 +32,7 @@ class FirestoreGroupChatDataSource {
     required List<String> memberIds,
     required String creatorId,
     required bool isPublic,
+    String? avatarUrl,
   }) async {
     try {
       final now = DateTime.now();
@@ -43,6 +44,7 @@ class FirestoreGroupChatDataSource {
         'isPublic': isPublic,
         'createdAt': Timestamp.fromDate(now),
         'updatedAt': Timestamp.fromDate(now),
+        'avatarUrl': avatarUrl,
       });
 
       final doc = await docRef.get();
@@ -103,6 +105,28 @@ class FirestoreGroupChatDataSource {
       await batch.commit();
     } catch (e) {
       throw Exception('Failed to add members with sync: $e');
+    }
+  }
+
+  /// Updates group chat details (name, description, avatarUrl).
+  Future<void> updateGroupChat({
+    required String chatId,
+    String? name,
+    String? description,
+    String? avatarUrl,
+  }) async {
+    try {
+      final Map<String, dynamic> updates = {
+        'updatedAt': Timestamp.fromDate(DateTime.now()),
+      };
+
+      if (name != null) updates['name'] = name;
+      if (description != null) updates['description'] = description;
+      if (avatarUrl != null) updates['avatarUrl'] = avatarUrl;
+
+      await _firestore.collection('groupChats').doc(chatId).update(updates);
+    } catch (e) {
+      throw Exception('Failed to update group chat: $e');
     }
   }
 }

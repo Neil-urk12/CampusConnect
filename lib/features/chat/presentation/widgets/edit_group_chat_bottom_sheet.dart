@@ -3,40 +3,52 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:appwrite/appwrite.dart';
-import '../../../../providers/auth_providers.dart';
 import '../../../../services/appwrite_storage_service.dart';
+import '../../domain/entities/group_chat.dart';
 import '../../providers/group_chat_provider.dart';
 
-/// Bottom sheet for creating a new group chat.
-class CreateGroupChatBottomSheet extends ConsumerStatefulWidget {
-  const CreateGroupChatBottomSheet({super.key});
+/// Bottom sheet for editing an existing group chat.
+class EditGroupChatBottomSheet extends ConsumerStatefulWidget {
+  final GroupChat groupChat;
 
-  /// Shows the create group chat bottom sheet.
-  static Future<void> show(BuildContext context) {
+  const EditGroupChatBottomSheet({super.key, required this.groupChat});
+
+  /// Shows the edit group chat bottom sheet.
+  static Future<void> show(BuildContext context, GroupChat groupChat) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => const CreateGroupChatBottomSheet(),
+      builder: (context) => EditGroupChatBottomSheet(groupChat: groupChat),
     );
   }
 
   @override
-  ConsumerState<CreateGroupChatBottomSheet> createState() =>
-      _CreateGroupChatBottomSheetState();
+  ConsumerState<EditGroupChatBottomSheet> createState() =>
+      _EditGroupChatBottomSheetState();
 }
 
-class _CreateGroupChatBottomSheetState
-    extends ConsumerState<CreateGroupChatBottomSheet> {
+class _EditGroupChatBottomSheetState
+    extends ConsumerState<EditGroupChatBottomSheet> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _descriptionController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _descriptionController;
   final _imagePicker = ImagePicker();
-  bool _isPublic = true;
   bool _isLoading = false;
   File? _selectedImage;
+  String? _currentAvatarUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.groupChat.name);
+    _descriptionController = TextEditingController(
+      text: widget.groupChat.description ?? '',
+    );
+    _currentAvatarUrl = widget.groupChat.avatarUrl;
+  }
 
   @override
   void dispose() {
@@ -57,6 +69,7 @@ class _CreateGroupChatBottomSheetState
       if (image != null) {
         setState(() {
           _selectedImage = File(image.path);
+          _currentAvatarUrl = null; // Clear current URL when new image selected
         });
       }
     } catch (e) {
@@ -91,62 +104,69 @@ class _CreateGroupChatBottomSheetState
     }
   }
 
-  Future<void> _createGroupChat() async {
+  Future<void> _updateGroupChat() async {
     if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    final authState = ref.read(authStateNotifierProvider);
-    if (authState.user == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('You must be logged in to create a group chat'),
-          ),
-        );
-      }
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      // Upload avatar if selected
-      String? avatarUrl;
+      // Upload new avatar if selected
+      String? avatarUrl = _currentAvatarUrl;
       if (_selectedImage != null) {
         avatarUrl = await _uploadAvatar();
       }
 
       final service = ref.read(groupChatServiceProvider);
-      await service.createGroupChat(
+      await service.updateGroupChat(
+        chatId: widget.groupChat.id,
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
-        memberIds: [authState.user!.userId],
-        creatorId: authState.user!.userId,
-        isPublic: _isPublic,
         avatarUrl: avatarUrl,
       );
 
       if (mounted) {
-        ref.invalidate(userGroupChatsProvider(authState.user!.userId));
+        // Invalidate providers to refresh both detail and list views
+        ref.invalidate(groupChatByIdProvider(widget.groupChat.id));
+
+        // Invalidate list for all members
+        for (final memberId in widget.groupChat.memberIds) {
+          ref.invalidate(userGroupChatsProvider(memberId));
+        }
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Group chat created successfully!')),
+          const SnackBar(content: Text('Group chat updated successfully!')),
         );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create group chat: $e')),
+          SnackBar(content: Text('Failed to update group chat: $e')),
         );
       }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Widget _buildAvatarPreview() {
+    if (_selectedImage != null) {
+      return Image.file(_selectedImage!, fit: BoxFit.cover);
+    } else if (_currentAvatarUrl != null) {
+      return Image.network(
+        _currentAvatarUrl!,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stack) =>
+            Icon(Icons.group, size: 40, color: Colors.grey[600]),
+      );
+    } else {
+      return Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey[600]);
     }
   }
 
@@ -168,10 +188,10 @@ class _CreateGroupChatBottomSheetState
             children: [
               Row(
                 children: [
-                  const Icon(Icons.group_add, size: 28),
+                  const Icon(Icons.edit, size: 28),
                   const SizedBox(width: 12),
                   Text(
-                    'Create Group Chat',
+                    'Edit Group Chat',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -195,22 +215,11 @@ class _CreateGroupChatBottomSheetState
                         decoration: BoxDecoration(
                           color: Colors.grey[300],
                           borderRadius: BorderRadius.circular(16),
-                          image: _selectedImage != null
-                              ? DecorationImage(
-                                  image: FileImage(_selectedImage!),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
                         ),
-                        child: _selectedImage == null
-                            ? Icon(
-                                Icons.add_photo_alternate,
-                                size: 40,
-                                color: Colors.grey[600],
-                              )
-                            : null,
+                        clipBehavior: Clip.antiAlias,
+                        child: _buildAvatarPreview(),
                       ),
-                      if (_selectedImage != null)
+                      if (_selectedImage != null || _currentAvatarUrl != null)
                         Positioned(
                           top: 0,
                           right: 0,
@@ -218,6 +227,7 @@ class _CreateGroupChatBottomSheetState
                             onTap: () {
                               setState(() {
                                 _selectedImage = null;
+                                _currentAvatarUrl = null;
                               });
                             },
                             child: Container(
@@ -234,6 +244,23 @@ class _CreateGroupChatBottomSheetState
                             ),
                           ),
                         ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.teal[700],
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -241,7 +268,7 @@ class _CreateGroupChatBottomSheetState
               const SizedBox(height: 8),
               Center(
                 child: Text(
-                  'Tap to add group picture',
+                  'Tap to change group picture',
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ),
@@ -264,7 +291,6 @@ class _CreateGroupChatBottomSheetState
                   return null;
                 },
                 enabled: !_isLoading,
-                autofocus: true,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -278,35 +304,17 @@ class _CreateGroupChatBottomSheetState
                 maxLines: 3,
                 enabled: !_isLoading,
               ),
-              const SizedBox(height: 8),
-              SwitchListTile(
-                title: const Text('Public Group'),
-                subtitle: Text(
-                  _isPublic
-                      ? 'Anyone can discover and join this group'
-                      : 'Only invited members can join',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                value: _isPublic,
-                onChanged: _isLoading
-                    ? null
-                    : (value) {
-                        setState(() => _isPublic = value);
-                      },
-                secondary: Icon(_isPublic ? Icons.public : Icons.lock),
-                contentPadding: EdgeInsets.zero,
-              ),
               const SizedBox(height: 20),
               ElevatedButton.icon(
-                onPressed: _isLoading ? null : _createGroupChat,
+                onPressed: _isLoading ? null : _updateGroupChat,
                 icon: _isLoading
                     ? const SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Icons.add),
-                label: Text(_isLoading ? 'Creating...' : 'Create Group Chat'),
+                    : const Icon(Icons.save),
+                label: Text(_isLoading ? 'Updating...' : 'Save Changes'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),

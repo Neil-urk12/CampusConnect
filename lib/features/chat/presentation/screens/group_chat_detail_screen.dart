@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../providers/auth_providers.dart';
 import '../../providers/group_chat_provider.dart';
 import '../../providers/message_provider.dart';
+import '../widgets/edit_group_chat_bottom_sheet.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/message_input_widget.dart';
 
@@ -20,9 +22,44 @@ class GroupChatDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final messagesAsync = ref.watch(messagesStreamProvider(chatId));
     final chatAsync = ref.watch(groupChatByIdProvider(chatId));
+    final authState = ref.watch(authStateNotifierProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(chatName)),
+      appBar: AppBar(
+        title: Text(chatName),
+        actions: [
+          chatAsync.when(
+            data: (chat) {
+              // Only show menu if user is creator
+              if (authState.user?.userId == chat.creatorId) {
+                return PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      EditGroupChatBottomSheet.show(context, chat);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit),
+                          SizedBox(width: 8),
+                          Text('Edit Group'),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           // Messages list (reverse chronological)

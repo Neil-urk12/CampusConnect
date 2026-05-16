@@ -24,6 +24,7 @@ class GroupChatService {
     required List<String> memberIds,
     required String creatorId,
     required bool isPublic,
+    String? avatarUrl,
   }) async {
     try {
       return await _repository.createGroupChat(
@@ -32,6 +33,7 @@ class GroupChatService {
         memberIds: memberIds,
         creatorId: creatorId,
         isPublic: isPublic,
+        avatarUrl: avatarUrl,
       );
     } catch (e) {
       throw Exception('Failed to create group chat: $e');
@@ -53,6 +55,25 @@ class GroupChatService {
       await _repository.addMembers(chatId, memberIds);
     } catch (e) {
       throw Exception('Failed to add members: $e');
+    }
+  }
+
+  /// Updates group chat details (name, description, avatarUrl).
+  Future<void> updateGroupChat({
+    required String chatId,
+    String? name,
+    String? description,
+    String? avatarUrl,
+  }) async {
+    try {
+      await _repository.updateGroupChat(
+        chatId: chatId,
+        name: name,
+        description: description,
+        avatarUrl: avatarUrl,
+      );
+    } catch (e) {
+      throw Exception('Failed to update group chat: $e');
     }
   }
 }

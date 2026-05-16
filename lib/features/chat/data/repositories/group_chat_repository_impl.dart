@@ -21,6 +21,7 @@ class GroupChatRepositoryImpl implements GroupChatRepository {
     required List<String> memberIds,
     required String creatorId,
     required bool isPublic,
+    String? avatarUrl,
   }) async {
     return await _dataSource.createGroupChat(
       name: name,
@@ -28,6 +29,7 @@ class GroupChatRepositoryImpl implements GroupChatRepository {
       memberIds: memberIds,
       creatorId: creatorId,
       isPublic: isPublic,
+      avatarUrl: avatarUrl,
     );
   }
 
@@ -44,5 +46,20 @@ class GroupChatRepositoryImpl implements GroupChatRepository {
   /// Adds members to a group chat and syncs with UserModel.groupMemberships.
   Future<void> addMembersWithSync(String chatId, List<String> memberIds) async {
     await _dataSource.addMembersWithSync(chatId, memberIds);
+  }
+
+  @override
+  Future<void> updateGroupChat({
+    required String chatId,
+    String? name,
+    String? description,
+    String? avatarUrl,
+  }) async {
+    await _dataSource.updateGroupChat(
+      chatId: chatId,
+      name: name,
+      description: description,
+      avatarUrl: avatarUrl,
+    );
   }
 }
