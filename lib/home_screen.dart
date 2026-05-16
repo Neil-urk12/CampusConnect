@@ -5,6 +5,7 @@ import 'features/profile/profile_screen_riverpod.dart';
 import 'features/announcements/presentation/screens/announcements_screen.dart';
 import 'features/chat/presentation/screens/chat_screen.dart';
 import 'features/events/events_screen.dart';
+import 'features/resources/presentation/resources_screen.dart';
 import 'features/events/providers/event_providers.dart';
 import 'app/routes.dart';
 import 'providers/auth_providers.dart';
@@ -27,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const AnnouncementsScreen(),
     const EventsScreen(),
     const ChatScreen(),
-    const Center(child: Text("Library Tab")),
+    const ResourcesScreen(),
     const ProfileScreenRiverpod(),
   ];
 
@@ -62,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildNavItem(0, Icons.campaign_outlined, "Announce"),
                 _buildNavItem(1, Icons.event_outlined, "Events"),
                 _buildNavItem(2, Icons.chat_bubble_outline_rounded, "Chats"),
-                _buildNavItem(3, Icons.inventory_2_outlined, "Library"),
+                _buildNavItem(3, Icons.folder_outlined, "Resources"),
                 _buildNavItem(4, Icons.person_outline, "Profile"),
               ],
             ),

@@ -13,6 +13,9 @@ class AppwriteConfig {
   // Reuse chat_attachments bucket for announcements (free tier has 1 bucket limit)
   static String get announcementAttachmentsBucketId => chatAttachmentsBucketId;
 
+  // Reuse chat_attachments bucket for resources (free tier has 1 bucket limit)
+  static String get resourceAttachmentsBucketId => chatAttachmentsBucketId;
+
   /// Singleton instance of Appwrite Client
   static Client? _client;
 

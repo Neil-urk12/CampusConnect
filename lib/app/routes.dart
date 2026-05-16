@@ -11,6 +11,9 @@ import '../features/events/events_screen.dart';
 import '../features/events/presentation/screens/event_detail_screen.dart';
 import '../features/chat/presentation/screens/chat_screen.dart';
 import '../features/resources/resources_screen.dart';
+import '../features/resources/presentation/resource_detail_screen.dart';
+import '../features/resources/domain/entities/resource_entity.dart';
+import '../features/resources/presentation/upload_resource_screen.dart';
 import '../features/profile/profile_screen_riverpod.dart';
 
 /// Application route names
@@ -30,6 +33,8 @@ class AppRoutes {
   static const String eventDetail = '/events/detail';
   static const String chats = '/chats';
   static const String resources = '/resources';
+  static const String resourceDetail = '/resources/detail';
+  static const String uploadResource = '/resources/upload';
   static const String profile = '/profile';
 }
 
@@ -118,6 +123,18 @@ class AppRouteGenerator {
           settings: settings,
         );
 
+      case AppRoutes.resourceDetail:
+        final resource = settings.arguments as ResourceEntity;
+        return MaterialPageRoute(
+          builder: (_) => ResourceDetailScreen(resource: resource),
+          settings: settings,
+        );
+
+      case AppRoutes.uploadResource:
+        return MaterialPageRoute(
+          builder: (_) => const UploadResourceScreen(),
+          settings: settings,
+        );
       case AppRoutes.profile:
         return MaterialPageRoute(
           builder: (_) => const ProfileScreenRiverpod(),
@@ -145,6 +162,8 @@ class AppRouteGenerator {
     AppRoutes.eventDetail,
     AppRoutes.chats,
     AppRoutes.resources,
+    AppRoutes.resourceDetail,
+    AppRoutes.uploadResource,
     AppRoutes.profile,
   ];
 
