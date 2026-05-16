@@ -19,9 +19,8 @@ service cloud.firestore {
       let hasAllFields = request.resource.data.keys().hasAll(requiredFields);
       let validRole = request.resource.data.role == 'student';
       let validGroupMemberships = request.resource.data.groupMemberships is list;
-      let userIdMatches = request.auth.uid == resource.id;
-      
-      return hasAllFields && validRole && validGroupMemberships && userIdMatches;
+
+      return hasAllFields && validRole && validGroupMemberships;
     }
     
     // Helper function to validate user document updates
@@ -129,8 +128,8 @@ service cloud.firestore {
     
     // Group chats collection rules
     match /groupChats/{chatId} {
-      // Allow read access only if user is in memberIds
-      allow read: if isChatMember(resource.data);
+      // Allow read access if user is a member OR the chat is public
+      allow read: if isAuthenticated() && (isChatMember(resource.data) || resource.data.isPublic == true);
       
       // Allow creation if user is the creator and in memberIds
       allow create: if isValidGroupChatCreation();
@@ -163,8 +162,9 @@ service cloud.firestore {
           return hasAllFields && senderMatches && notDeleted;
         }
         
-        // Allow read if user is a member of the parent chat
-        allow read: if isChatMember(get(/databases/$(database)/documents/groupChats/$(chatId)).data);
+        // Allow read if user is a member of the parent chat OR the chat is public
+      allow read: if isAuthenticated() && (isChatMember(get(/databases/$(database)/documents/groupChats/$(chatId)).data)
+          || get(/databases/$(database)/documents/groupChats/$(chatId)).data.isPublic == true);
         
         // Allow creation if user is a member and sender matches auth
         allow create: if isChatMember(get(/databases/$(database)/documents/groupChats/$(chatId)).data) && 
@@ -224,6 +224,30 @@ service cloud.firestore {
         // Users can delete their own RSVP
         allow delete: if isOwner(userId);
       }
+    }
+
+    // Resources collection rules — public library
+    match /resources/{resourceId} {
+      // Public read access (anyone can browse/download)
+      // Split into get (single doc) and list (queries) for clarity
+      allow get: if true;
+      allow list: if true;
+
+      // Authenticated users can create resources with matching uploadedBy
+      allow create: if isAuthenticated()
+                    && request.resource.data.uploadedBy == request.auth.uid
+                    && request.resource.data.keys().hasAll([
+                      'title', 'fileUrl', 'fileName', 'fileSize',
+                      'mimeType', 'category', 'uploadedBy',
+                      'uploadedByName', 'uploadedAt', 'downloadCount'
+                    ])
+                    && request.resource.data.category in ['study_materials', 'photos', 'other'];
+
+      // Owner can delete their own resource
+      allow delete: if isAuthenticated() && resource.data.uploadedBy == request.auth.uid;
+
+      // Immutable — no updates allowed
+      allow update: if false;
     }
     
     // Deny all other access by default
