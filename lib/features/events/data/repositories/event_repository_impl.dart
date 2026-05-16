@@ -69,6 +69,56 @@ class EventRepositoryImpl implements EventRepository {
   }
 
   @override
+  Stream<List<EventEntity>> streamAllUpcomingEvents() {
+    try {
+      AppLogger.debug('Streaming all upcoming events');
+      return _dataSource.streamAllUpcomingEvents();
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to stream upcoming events',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Stream<List<EventEntity>> streamEventsForDateRange(
+    DateTime startDate,
+    DateTime endDate,
+  ) {
+    try {
+      AppLogger.debug(
+        'Streaming events for date range: $startDate to $endDate',
+      );
+      return _dataSource.streamEventsForDateRange(startDate, endDate);
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to stream events for date range',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Stream<EventEntity> streamEventById(String eventId) {
+    try {
+      AppLogger.debug('Streaming event by ID: $eventId');
+      return _dataSource.streamEventById(eventId);
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to stream event by ID: $eventId',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  @override
   Future<void> createEvent(EventEntity event) async {
     try {
       AppLogger.info('Creating event: ${event.title}');

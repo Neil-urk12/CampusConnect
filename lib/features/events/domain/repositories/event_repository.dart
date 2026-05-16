@@ -14,6 +14,18 @@ abstract class EventRepository {
   /// Get all upcoming events (startDateTime >= now)
   Future<List<EventEntity>> getAllUpcomingEvents();
 
+  /// Stream all upcoming events (real-time updates)
+  Stream<List<EventEntity>> streamAllUpcomingEvents();
+
+  /// Stream events for a date range (real-time updates)
+  Stream<List<EventEntity>> streamEventsForDateRange(
+    DateTime startDate,
+    DateTime endDate,
+  );
+
+  /// Stream a single event by ID (real-time updates)
+  Stream<EventEntity> streamEventById(String eventId);
+
   /// Create a new event
   Future<void> createEvent(EventEntity event);
 

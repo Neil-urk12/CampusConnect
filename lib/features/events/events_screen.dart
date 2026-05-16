@@ -34,11 +34,6 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       final service = ref.read(eventServiceProvider);
       final events = await service.getEventsForMonth(month);
 
-      print('EventsScreen._loadEventsForMonth: Loaded ${events.length} events');
-      for (final event in events) {
-        print('  - Event ${event.id}: attendeeCount=${event.attendeeCount}');
-      }
-
       final Map<DateTime, List<dynamic>> eventMap = {};
       for (final event in events) {
         final date = DateTime(

@@ -71,6 +71,68 @@ class FirestoreEventDataSource {
     }
   }
 
+  /// Stream all upcoming events (real-time updates)
+  Stream<List<EventModel>> streamAllUpcomingEvents() {
+    try {
+      final now = DateTime.now();
+      return _firestore
+          .collection(_collectionName)
+          .where('isPublished', isEqualTo: true)
+          .where('startDateTime', isGreaterThanOrEqualTo: now)
+          .orderBy('startDateTime')
+          .snapshots()
+          .map(
+            (snapshot) => snapshot.docs
+                .map((doc) => EventModel.fromFirestore(doc))
+                .toList(),
+          );
+    } catch (e) {
+      throw EventNetworkException('Failed to stream upcoming events: $e');
+    }
+  }
+
+  /// Stream events for a date range (real-time updates)
+  Stream<List<EventModel>> streamEventsForDateRange(
+    DateTime startDate,
+    DateTime endDate,
+  ) {
+    try {
+      return _firestore
+          .collection(_collectionName)
+          .where('isPublished', isEqualTo: true)
+          .where('startDateTime', isGreaterThanOrEqualTo: startDate)
+          .where('startDateTime', isLessThanOrEqualTo: endDate)
+          .orderBy('startDateTime')
+          .snapshots()
+          .map(
+            (snapshot) => snapshot.docs
+                .map((doc) => EventModel.fromFirestore(doc))
+                .toList(),
+          );
+    } catch (e) {
+      throw EventNetworkException('Failed to stream events for date range: $e');
+    }
+  }
+
+  /// Stream a single event by ID (real-time updates)
+  Stream<EventModel> streamEventById(String eventId) {
+    try {
+      return _firestore
+          .collection(_collectionName)
+          .doc(eventId)
+          .snapshots()
+          .map((doc) {
+            if (!doc.exists) {
+              throw EventNotFoundException(eventId);
+            }
+            return EventModel.fromFirestore(doc);
+          });
+    } catch (e) {
+      if (e is EventNotFoundException) rethrow;
+      throw EventNetworkException('Failed to stream event: $e');
+    }
+  }
+
   /// Create a new event
   Future<void> createEvent(EventModel event) async {
     try {

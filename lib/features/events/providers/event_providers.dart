@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/auth_providers.dart';
@@ -43,12 +44,27 @@ final eventByIdProvider = FutureProvider.family<EventEntity, String>((
   return await service.getEventById(eventId);
 });
 
+// Provider for streaming single event by ID (real-time updates)
+final eventStreamProvider = StreamProvider.family<EventEntity, String>((
+  ref,
+  eventId,
+) {
+  final repository = ref.watch(eventRepositoryProvider);
+  return repository.streamEventById(eventId);
+});
+
 // Provider for fetching all upcoming events
 final allUpcomingEventsProvider = FutureProvider<List<EventEntity>>((
   ref,
 ) async {
   final service = ref.watch(eventServiceProvider);
   return await service.getAllUpcomingEvents();
+});
+
+// Provider for streaming all upcoming events (real-time updates)
+final upcomingEventsStreamProvider = StreamProvider<List<EventEntity>>((ref) {
+  final repository = ref.watch(eventRepositoryProvider);
+  return repository.streamAllUpcomingEvents();
 });
 
 // Provider for fetching user's RSVP status for an event
@@ -98,9 +114,31 @@ class EventScreenState {
 
 // EventStateNotifier for managing selected date and filtered events
 class EventStateNotifier extends Notifier<EventScreenState> {
+  StreamSubscription<List<EventEntity>>? _eventsSubscription;
+
   @override
   EventScreenState build() {
+    // Subscribe to upcoming events stream for real-time updates
+    _subscribeToUpcomingEvents();
+    ref.onDispose(() {
+      _eventsSubscription?.cancel();
+    });
     return const EventScreenState();
+  }
+
+  void _subscribeToUpcomingEvents() {
+    final repository = ref.read(eventRepositoryProvider);
+    _eventsSubscription = repository.streamAllUpcomingEvents().listen(
+      (events) {
+        // Only update if we're showing all events (no date filter)
+        if (state.selectedDate == null) {
+          state = state.copyWith(filteredEvents: events, isLoading: false);
+        }
+      },
+      onError: (e) {
+        state = state.copyWith(errorMessage: e.toString());
+      },
+    );
   }
 
   void selectDate(DateTime date) {
@@ -109,6 +147,8 @@ class EventStateNotifier extends Notifier<EventScreenState> {
 
   void clearDateFilter() {
     state = state.copyWith(selectedDate: null, filteredEvents: []);
+    // Reload all upcoming events
+    loadAllUpcomingEvents();
   }
 
   Future<void> loadEventsForDate(DateTime date) async {

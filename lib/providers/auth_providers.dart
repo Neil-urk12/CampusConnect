@@ -120,6 +120,12 @@ final isAuthLoadingProvider = Provider<bool>((ref) {
   return ref.watch(authStateNotifierProvider).isLoading;
 });
 
+/// Convenience provider to check if user is admin or moderator
+final isAdminProvider = Provider<bool>((ref) {
+  final role = ref.watch(authStateNotifierProvider).user?.role ?? '';
+  return role == 'admin' || role == 'moderator';
+});
+
 /// Notifier for managing authentication state
 class AuthStateNotifier extends Notifier<AuthState> {
   late AuthService _authService;
