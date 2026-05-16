@@ -22,6 +22,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
   DateTime? _selectedDay;
   Map<DateTime, List<dynamic>> _events = {};
   EventCategory? _selectedCategory;
+  CalendarFormat _calendarFormat = CalendarFormat.month;
 
   @override
   void initState() {
@@ -101,58 +102,111 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header with month/year and nav arrows
+                      // Header with month/year and controls
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Flexible(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'ACADEMIC YEAR ${_focusedDay.year}',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 1.2,
-                                    color: DesignTokens.secondary,
-                                  ),
-                                ),
-                                const SizedBox(height: DesignTokens.spacing4),
-                                Text(
-                                  DateFormat('MMMM').format(_focusedDay),
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 44, // display-md: 2.75rem
-                                    fontWeight: FontWeight.w800,
-                                    color: DesignTokens.primary,
-                                    height: 1.1,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                          Row(
+                          // Month/year
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildNavButton(Icons.chevron_left, () {
-                                setState(() {
-                                  _focusedDay = DateTime(
-                                    _focusedDay.year,
-                                    _focusedDay.month - 1,
-                                  );
-                                });
-                                _loadEventsForMonth(_focusedDay);
-                              }),
-                              const SizedBox(width: DesignTokens.spacing8),
-                              _buildNavButton(Icons.chevron_right, () {
-                                setState(() {
-                                  _focusedDay = DateTime(
-                                    _focusedDay.year,
-                                    _focusedDay.month + 1,
-                                  );
-                                });
-                                _loadEventsForMonth(_focusedDay);
-                              }),
+                              Text(
+                                'ACADEMIC YEAR ${_focusedDay.year}',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.2,
+                                  color: DesignTokens.secondary,
+                                ),
+                              ),
+                              const SizedBox(height: DesignTokens.spacing4),
+                              Text(
+                                DateFormat('MMMM').format(_focusedDay),
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 44, // display-md: 2.75rem
+                                  fontWeight: FontWeight.w800,
+                                  color: DesignTokens.primary,
+                                  height: 1.1,
+                                ),
+                              ),
+                            ],
+                          ),
+                          // Nav arrows and toggle button
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Row(
+                                children: [
+                                  _buildNavButton(Icons.chevron_left, () {
+                                    setState(() {
+                                      _focusedDay = DateTime(
+                                        _focusedDay.year,
+                                        _focusedDay.month - 1,
+                                      );
+                                    });
+                                    _loadEventsForMonth(_focusedDay);
+                                  }),
+                                  const SizedBox(width: DesignTokens.spacing4),
+                                  _buildNavButton(Icons.chevron_right, () {
+                                    setState(() {
+                                      _focusedDay = DateTime(
+                                        _focusedDay.year,
+                                        _focusedDay.month + 1,
+                                      );
+                                    });
+                                    _loadEventsForMonth(_focusedDay);
+                                  }),
+                                ],
+                              ),
+                              const SizedBox(height: DesignTokens.spacing8),
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _calendarFormat =
+                                        _calendarFormat == CalendarFormat.month
+                                        ? CalendarFormat.week
+                                        : CalendarFormat.month;
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: DesignTokens.spacing12,
+                                    vertical: DesignTokens.spacing4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: DesignTokens.surfaceContainerHigh,
+                                    borderRadius: BorderRadius.circular(
+                                      DesignTokens.radiusXl,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _calendarFormat == CalendarFormat.month
+                                            ? Icons.unfold_less
+                                            : Icons.unfold_more,
+                                        size: 14,
+                                        color: DesignTokens.surfaceTint,
+                                      ),
+                                      const SizedBox(
+                                        width: DesignTokens.spacing4,
+                                      ),
+                                      Text(
+                                        _calendarFormat == CalendarFormat.month
+                                            ? 'Week'
+                                            : 'Month',
+                                        style: GoogleFonts.manrope(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: DesignTokens.onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -163,7 +217,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                         firstDay: DateTime.utc(2020, 1, 1),
                         lastDay: DateTime.utc(2030, 12, 31),
                         focusedDay: _focusedDay,
-                        calendarFormat: CalendarFormat.month,
+                        calendarFormat: _calendarFormat,
                         selectedDayPredicate: (day) {
                           return isSameDay(_selectedDay, day);
                         },
@@ -468,15 +522,17 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
 
   Widget _buildNavButton(IconData icon, VoidCallback onPressed) {
     return Container(
+      width: 28,
+      height: 28,
       decoration: BoxDecoration(
         color: DesignTokens.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
       ),
       child: IconButton(
-        icon: Icon(icon, color: DesignTokens.surfaceTint, size: 20),
+        icon: Icon(icon, color: DesignTokens.surfaceTint, size: 14),
         onPressed: onPressed,
-        padding: const EdgeInsets.all(DesignTokens.spacing8),
-        constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
       ),
     );
   }
