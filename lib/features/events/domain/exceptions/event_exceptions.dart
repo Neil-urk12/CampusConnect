@@ -15,19 +15,17 @@ class EventNotFoundException extends EventException {
 }
 
 class EventValidationException extends EventException {
-  EventValidationException(String message)
-    : super(message, code: 'validation-error');
+  EventValidationException(super.message, {super.code = 'validation-error'});
 }
 
 class EventPermissionException extends EventException {
-  EventPermissionException(String message)
-    : super(message, code: 'permission-denied');
+  EventPermissionException(super.message, {super.code = 'permission-denied'});
 }
 
 class EventNetworkException extends EventException {
-  EventNetworkException(String message) : super(message, code: 'network-error');
+  EventNetworkException(super.message, {super.code = 'network-error'});
 }
 
 class EventRsvpException extends EventException {
-  EventRsvpException(String message) : super(message, code: 'rsvp-error');
+  EventRsvpException(super.message, {super.code = 'rsvp-error'});
 }

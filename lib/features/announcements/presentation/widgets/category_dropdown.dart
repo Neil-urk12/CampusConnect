@@ -167,7 +167,10 @@ class CategoryDropdown extends ConsumerWidget {
                   padding: const EdgeInsets.all(12.0),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: DesignTokens.onSurfaceVariant),
+                      Icon(
+                        Icons.info_outline,
+                        color: DesignTokens.onSurfaceVariant,
+                      ),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
@@ -181,7 +184,7 @@ class CategoryDropdown extends ConsumerWidget {
               ),
             if (categories.isNotEmpty)
               DropdownButtonFormField<String>(
-                value: formState.categoryId,
+                initialValue: formState.categoryId,
                 decoration: const InputDecoration(
                   labelText: 'Category *',
                   hintText: 'Select a category',

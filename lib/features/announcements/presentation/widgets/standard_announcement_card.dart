@@ -24,7 +24,7 @@ class StandardAnnouncementCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: theme.colorScheme.outline.withOpacity(0.3),
+          color: theme.colorScheme.outline.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -72,8 +72,8 @@ class StandardAnnouncementCard extends StatelessWidget {
                           Text(
                             announcement.authorDepartment!,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.6,
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
                               ),
                             ),
                           ),
@@ -115,7 +115,7 @@ class StandardAnnouncementCard extends StatelessWidget {
               Text(
                 announcement.body,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                   height: 1.5,
                 ),
                 maxLines: 3,
@@ -137,7 +137,9 @@ class StandardAnnouncementCard extends StatelessWidget {
                         color: theme.colorScheme.surfaceContainerHighest,
                         child: Icon(
                           Icons.image_not_supported,
-                          color: theme.colorScheme.onSurface.withOpacity(0.3),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.3,
+                          ),
                         ),
                       );
                     },
@@ -167,8 +169,8 @@ class StandardAnnouncementCard extends StatelessWidget {
                             child: Text(
                               '#$tag',
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(
-                                  0.7,
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.7,
                                 ),
                               ),
                             ),
@@ -180,7 +182,7 @@ class StandardAnnouncementCard extends StatelessWidget {
                   Text(
                     dateFormat.format(announcement.createdAt),
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                 ],

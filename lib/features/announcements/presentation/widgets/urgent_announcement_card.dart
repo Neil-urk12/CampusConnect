@@ -100,7 +100,7 @@ class UrgentAnnouncementCard extends StatelessWidget {
                     // Author avatar
                     CircleAvatar(
                       radius: 20,
-                      backgroundColor: urgentColor.withOpacity(0.1),
+                      backgroundColor: urgentColor.withValues(alpha: 0.1),
                       backgroundImage: announcement.authorAvatarUrl != null
                           ? NetworkImage(announcement.authorAvatarUrl!)
                           : null,
@@ -130,8 +130,8 @@ class UrgentAnnouncementCard extends StatelessWidget {
                             Text(
                               announcement.authorDepartment!,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(
-                                  0.6,
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.6,
                                 ),
                               ),
                             ),
@@ -155,7 +155,7 @@ class UrgentAnnouncementCard extends StatelessWidget {
                 Text(
                   announcement.body,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.9),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
                     height: 1.5,
                     fontWeight: FontWeight.w500,
                   ),
@@ -178,7 +178,9 @@ class UrgentAnnouncementCard extends StatelessWidget {
                           color: theme.colorScheme.surfaceContainerHighest,
                           child: Icon(
                             Icons.image_not_supported,
-                            color: theme.colorScheme.onSurface.withOpacity(0.3),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.3,
+                            ),
                           ),
                         );
                       },
@@ -202,7 +204,7 @@ class UrgentAnnouncementCard extends StatelessWidget {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: urgentColor.withOpacity(0.08),
+                                color: urgentColor.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -220,7 +222,9 @@ class UrgentAnnouncementCard extends StatelessWidget {
                     Text(
                       dateFormat.format(announcement.createdAt),
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.5,
+                        ),
                       ),
                     ),
                   ],
