@@ -7,6 +7,7 @@ import '../../domain/entities/event_entity.dart';
 import '../../domain/entities/rsvp_entity.dart';
 import '../../domain/exceptions/event_exceptions.dart';
 import '../../providers/event_providers.dart';
+import 'event_form_screen.dart';
 
 class EventDetailScreen extends ConsumerWidget {
   final String eventId;
@@ -185,9 +186,7 @@ class EventDetailScreen extends ConsumerWidget {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(message)));
-        // Invalidate providers to refresh UI
-        ref.invalidate(userRsvpProvider(eventId));
-        ref.invalidate(eventByIdProvider(eventId));
+        // Stream provider will update automatically - no need to invalidate
       }
     } on EventRsvpException catch (e) {
       if (context.mounted) {
@@ -221,9 +220,7 @@ class EventDetailScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Your RSVP has been cancelled')),
         );
-        // Invalidate providers to refresh UI
-        ref.invalidate(userRsvpProvider(eventId));
-        ref.invalidate(eventByIdProvider(eventId));
+        // Stream provider will update automatically - no need to invalidate
       }
     } on EventRsvpException catch (e) {
       if (context.mounted) {
@@ -259,9 +256,7 @@ class EventDetailScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('You\'re now attending this event!')),
         );
-        // Invalidate providers to refresh UI
-        ref.invalidate(userRsvpProvider(eventId));
-        ref.invalidate(eventByIdProvider(eventId));
+        // Stream provider will update automatically - no need to invalidate
       }
     } on EventRsvpException catch (e) {
       if (context.mounted) {
@@ -280,14 +275,113 @@ class EventDetailScreen extends ConsumerWidget {
     }
   }
 
+  /// Delete event handler (admin only)
+  Future<void> _deleteEvent(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Event'),
+        content: const Text(
+          'Are you sure you want to delete this event? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      final service = ref.read(eventServiceProvider);
+      await service.deleteEvent(eventId);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Event deleted successfully')),
+        );
+        Navigator.pop(context); // Go back to events list
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to delete event: $e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final eventAsync = ref.watch(eventByIdProvider(eventId));
+    // Use stream provider for real-time updates
+    final eventAsync = ref.watch(eventStreamProvider(eventId));
     final userRsvpAsync = ref.watch(userRsvpProvider(eventId));
     final currentUser = ref.watch(currentUserProvider);
 
+    final isAdmin = ref.watch(isAdminProvider);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Event Details')),
+      appBar: AppBar(
+        title: const Text('Event Details'),
+        actions: isAdmin
+            ? [
+                PopupMenuButton<String>(
+                  onSelected: (value) async {
+                    if (value == 'edit') {
+                      final event = eventAsync.value;
+                      if (event != null) {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EventFormScreen(event: event),
+                          ),
+                        );
+                        if (result == true) {
+                          // Refresh event data
+                          ref.invalidate(eventByIdProvider(eventId));
+                        }
+                      }
+                    } else if (value == 'delete') {
+                      _deleteEvent(context, ref);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit),
+                          SizedBox(width: 8),
+                          Text('Edit Event'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text(
+                            'Delete Event',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ]
+            : null,
+      ),
       body: eventAsync.when(
         data: (event) => SingleChildScrollView(
           child: Column(

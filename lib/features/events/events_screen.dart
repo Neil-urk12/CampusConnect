@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../providers/auth_providers.dart';
 import 'providers/event_providers.dart';
 import 'presentation/widgets/event_card.dart';
+import 'presentation/screens/event_form_screen.dart';
 import 'domain/entities/event_entity.dart';
 import '../../core/theme/design_tokens.dart';
 
@@ -31,6 +33,11 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     try {
       final service = ref.read(eventServiceProvider);
       final events = await service.getEventsForMonth(month);
+
+      print('EventsScreen._loadEventsForMonth: Loaded ${events.length} events');
+      for (final event in events) {
+        print('  - Event ${event.id}: attendeeCount=${event.attendeeCount}');
+      }
 
       final Map<DateTime, List<dynamic>> eventMap = {};
       for (final event in events) {
@@ -72,6 +79,9 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if user is admin/moderator for FAB visibility
+    final isAdmin = ref.watch(isAdminProvider);
+
     return Scaffold(
       backgroundColor: DesignTokens.surface,
       body: SafeArea(
@@ -432,6 +442,32 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
           ),
         ),
       ),
+      floatingActionButton: isAdmin
+          ? FloatingActionButton.extended(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const EventFormScreen(),
+                  ),
+                );
+                // Refresh events list if event was created
+                if (result == true) {
+                  ref
+                      .read(eventStateNotifierProvider.notifier)
+                      .loadAllUpcomingEvents();
+                  _loadEventsForMonth(_focusedDay);
+                }
+              },
+              backgroundColor: DesignTokens.secondary,
+              foregroundColor: DesignTokens.onSecondary,
+              icon: const Icon(Icons.add),
+              label: Text(
+                'Create Event',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+              ),
+            )
+          : null,
     );
   }
 
