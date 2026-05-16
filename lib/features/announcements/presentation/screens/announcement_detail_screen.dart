@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import '../../domain/entities/announcement_entity.dart';
 import '../../providers/announcement_providers.dart';
 import '../../../../providers/auth_providers.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/design_tokens.dart';
 
 /// Detail screen for viewing a single announcement with admin actions
 class AnnouncementDetailScreen extends ConsumerStatefulWidget {
@@ -36,32 +36,27 @@ class _AnnouncementDetailScreenState
     final userRole = user?.role ?? '';
     final isAdmin = userRole == 'admin' || userRole == 'moderator';
 
-    // Use app theme colors
-    final theme = Theme.of(context);
-    final primaryColor = theme.colorScheme.primary;
-    final secondaryColor = theme.colorScheme.secondary;
-
     return Scaffold(
-      backgroundColor: AppTheme.neutral,
+      backgroundColor: DesignTokens.surface,
       appBar: AppBar(
-        backgroundColor: AppTheme.neutral,
+        backgroundColor: DesignTokens.surface,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          color: primaryColor,
+          color: DesignTokens.primaryContainer,
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Announcement',
           style: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.bold,
-            color: primaryColor,
+            color: DesignTokens.primaryContainer,
           ),
         ),
         actions: [
           if (isAdmin)
             PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: primaryColor),
+              icon: Icon(Icons.more_vert, color: DesignTokens.primaryContainer),
               onSelected: (value) {
                 if (value == 'edit') {
                   _navigateToEdit(context, _currentAnnouncement);
@@ -74,7 +69,11 @@ class _AnnouncementDetailScreenState
                   value: 'edit',
                   child: Row(
                     children: [
-                      Icon(Icons.edit, size: 20, color: primaryColor),
+                      Icon(
+                        Icons.edit,
+                        size: 20,
+                        color: DesignTokens.primaryContainer,
+                      ),
                       const SizedBox(width: 12),
                       const Text('Edit'),
                     ],
@@ -84,15 +83,11 @@ class _AnnouncementDetailScreenState
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.delete,
-                        size: 20,
-                        color: theme.colorScheme.error,
-                      ),
+                      Icon(Icons.delete, size: 20, color: DesignTokens.error),
                       const SizedBox(width: 12),
                       Text(
                         'Delete',
-                        style: TextStyle(color: theme.colorScheme.error),
+                        style: TextStyle(color: DesignTokens.error),
                       ),
                     ],
                   ),
@@ -118,7 +113,7 @@ class _AnnouncementDetailScreenState
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: primaryColor,
+                          color: DesignTokens.primaryContainer,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Row(
@@ -127,7 +122,7 @@ class _AnnouncementDetailScreenState
                             const Icon(
                               Icons.push_pin,
                               size: 14,
-                              color: Colors.white,
+                              color: DesignTokens.onPrimary,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -135,7 +130,7 @@ class _AnnouncementDetailScreenState
                               style: GoogleFonts.manrope(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: DesignTokens.onPrimary,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -152,7 +147,7 @@ class _AnnouncementDetailScreenState
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFDC3545),
+                          color: DesignTokens.error,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Row(
@@ -161,7 +156,7 @@ class _AnnouncementDetailScreenState
                             const Icon(
                               Icons.warning_rounded,
                               size: 14,
-                              color: Colors.white,
+                              color: DesignTokens.onPrimary,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -169,7 +164,7 @@ class _AnnouncementDetailScreenState
                               style: GoogleFonts.manrope(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: DesignTokens.onPrimary,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -185,9 +180,9 @@ class _AnnouncementDetailScreenState
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: DesignTokens.surfaceContainerLowest,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE9ECEF)),
+                border: Border.all(color: DesignTokens.outlineVariant),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +193,7 @@ class _AnnouncementDetailScreenState
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: primaryColor,
+                      color: DesignTokens.primaryContainer,
                       height: 1.3,
                     ),
                   ),
@@ -214,10 +209,12 @@ class _AnnouncementDetailScreenState
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: secondaryColor.withValues(alpha: 0.1),
+                          color: DesignTokens.secondary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: secondaryColor.withValues(alpha: 0.3),
+                            color: DesignTokens.secondary.withValues(
+                              alpha: 0.3,
+                            ),
                           ),
                         ),
                         child: Text(
@@ -225,7 +222,7 @@ class _AnnouncementDetailScreenState
                           style: GoogleFonts.manrope(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: secondaryColor,
+                            color: DesignTokens.secondary,
                           ),
                         ),
                       ),
@@ -237,7 +234,7 @@ class _AnnouncementDetailScreenState
                         ).format(_currentAnnouncement.createdAt),
                         style: GoogleFonts.manrope(
                           fontSize: 13,
-                          color: const Color(0xFF6C757D),
+                          color: DesignTokens.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -250,7 +247,7 @@ class _AnnouncementDetailScreenState
                     style: GoogleFonts.manrope(
                       fontSize: 16,
                       height: 1.6,
-                      color: const Color(0xFF495057),
+                      color: DesignTokens.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -267,16 +264,18 @@ class _AnnouncementDetailScreenState
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8F9FA),
+                            color: DesignTokens.surface,
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: const Color(0xFFDEE2E6)),
+                            border: Border.all(
+                              color: DesignTokens.outlineVariant,
+                            ),
                           ),
                           child: Text(
                             '#$tag',
                             style: GoogleFonts.manrope(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: const Color(0xFF495057),
+                              color: DesignTokens.onSurfaceVariant,
                             ),
                           ),
                         );
@@ -296,12 +295,12 @@ class _AnnouncementDetailScreenState
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             height: 200,
-                            color: const Color(0xFFF8F9FA),
+                            color: DesignTokens.surface,
                             child: const Center(
                               child: Icon(
                                 Icons.broken_image,
                                 size: 48,
-                                color: Color(0xFFDEE2E6),
+                                color: DesignTokens.outlineVariant,
                               ),
                             ),
                           );
@@ -321,8 +320,8 @@ class _AnnouncementDetailScreenState
                         onPressed: () =>
                             _launchUrl(_currentAnnouncement.ctaUrl!),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: secondaryColor,
-                          foregroundColor: Colors.white,
+                          backgroundColor: DesignTokens.secondary,
+                          foregroundColor: DesignTokens.onSecondary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -348,7 +347,8 @@ class _AnnouncementDetailScreenState
                     children: [
                       CircleAvatar(
                         radius: 20,
-                        backgroundColor: primaryColor.withValues(alpha: 0.1),
+                        backgroundColor: DesignTokens.primaryContainer
+                            .withValues(alpha: 0.1),
                         backgroundImage:
                             _currentAnnouncement.authorAvatarUrl != null
                             ? NetworkImage(
@@ -361,7 +361,7 @@ class _AnnouncementDetailScreenState
                                     .toUpperCase(),
                                 style: GoogleFonts.plusJakartaSans(
                                   fontWeight: FontWeight.bold,
-                                  color: primaryColor,
+                                  color: DesignTokens.primaryContainer,
                                 ),
                               )
                             : null,
@@ -376,7 +376,7 @@ class _AnnouncementDetailScreenState
                               style: GoogleFonts.manrope(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFF1E1E1E),
+                                color: DesignTokens.onSurface,
                               ),
                             ),
                             if (_currentAnnouncement.authorDepartment != null)
@@ -384,7 +384,7 @@ class _AnnouncementDetailScreenState
                                 _currentAnnouncement.authorDepartment!,
                                 style: GoogleFonts.manrope(
                                   fontSize: 12,
-                                  color: const Color(0xFF6C757D),
+                                  color: DesignTokens.onSurfaceVariant,
                                 ),
                               ),
                           ],
@@ -399,7 +399,7 @@ class _AnnouncementDetailScreenState
                     'Visible to: ${_currentAnnouncement.targetAudience.map((a) => a[0].toUpperCase() + a.substring(1)).join(', ')}',
                     style: GoogleFonts.manrope(
                       fontSize: 12,
-                      color: const Color(0xFF6C757D),
+                      color: DesignTokens.onSurfaceVariant,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -441,7 +441,6 @@ class _AnnouncementDetailScreenState
     WidgetRef ref,
     AnnouncementEntity announcement,
   ) {
-    final theme = Theme.of(context);
     // Capture screen context before dialog builder
     final screenContext = context;
 
@@ -460,7 +459,7 @@ class _AnnouncementDetailScreenState
             const SizedBox(height: 12),
             Text(
               'This action cannot be undone. The announcement will be permanently deleted.',
-              style: TextStyle(color: theme.colorScheme.error),
+              style: TextStyle(color: DesignTokens.error),
             ),
           ],
         ),
@@ -475,7 +474,7 @@ class _AnnouncementDetailScreenState
               _deleteAnnouncement(screenContext, ref, announcement);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
+              backgroundColor: DesignTokens.error,
             ),
             child: const Text('Delete'),
           ),
@@ -505,11 +504,7 @@ class _AnnouncementDetailScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Announcement deleted successfully'),
-            backgroundColor:
-                Theme.of(
-                  context,
-                ).extension<ThemeData>()?.colorScheme.tertiary ??
-                Colors.green,
+            backgroundColor: DesignTokens.success,
           ),
         );
       }
@@ -518,7 +513,7 @@ class _AnnouncementDetailScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to delete announcement: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            backgroundColor: DesignTokens.error,
           ),
         );
       }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:appwrite/appwrite.dart';
 import '../../../../services/appwrite_storage_service.dart';
+import '../../../../core/theme/design_tokens.dart';
 import '../providers/announcement_form_provider.dart';
 
 /// Widget for picking and uploading announcement images
@@ -155,7 +156,7 @@ class _ImagePickerFieldState extends ConsumerState<ImagePickerField> {
         const SizedBox(height: 8),
         const Text(
           'PNG or JPEG, max 45MB',
-          style: TextStyle(color: Colors.grey, fontSize: 12),
+          style: TextStyle(color: DesignTokens.onSurfaceVariant, fontSize: 12),
         ),
         const SizedBox(height: 12),
 
@@ -176,12 +177,12 @@ class _ImagePickerFieldState extends ConsumerState<ImagePickerField> {
             padding: const EdgeInsets.only(top: 8.0),
             child: Row(
               children: [
-                const Icon(Icons.error, color: Colors.red, size: 16),
+                const Icon(Icons.error, color: DesignTokens.error, size: 16),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     _uploadError!,
-                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                    style: TextStyle(color: DesignTokens.error, fontSize: 12),
                   ),
                 ),
                 if (_selectedImage != null)
@@ -214,9 +215,9 @@ class _ImagePickerFieldState extends ConsumerState<ImagePickerField> {
     return Container(
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: DesignTokens.surfaceContainerLow,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: DesignTokens.outlineVariant),
       ),
       child: Row(
         children: [
@@ -244,12 +245,15 @@ class _ImagePickerFieldState extends ConsumerState<ImagePickerField> {
                 if (_isUploading)
                   const Text(
                     'Uploading...',
-                    style: TextStyle(color: Colors.blue, fontSize: 12),
+                    style: TextStyle(
+                      color: DesignTokens.surfaceTint,
+                      fontSize: 12,
+                    ),
                   )
                 else
                   const Text(
                     'Upload complete',
-                    style: TextStyle(color: Colors.green, fontSize: 12),
+                    style: TextStyle(color: DesignTokens.success, fontSize: 12),
                   ),
               ],
             ),
@@ -267,9 +271,9 @@ class _ImagePickerFieldState extends ConsumerState<ImagePickerField> {
     return Container(
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: DesignTokens.surfaceContainerLow,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: DesignTokens.outlineVariant),
       ),
       child: Row(
         children: [
@@ -284,7 +288,7 @@ class _ImagePickerFieldState extends ConsumerState<ImagePickerField> {
                 return Container(
                   width: 80,
                   height: 80,
-                  color: Colors.grey[300],
+                  color: DesignTokens.surfaceContainerLow,
                   child: const Icon(Icons.broken_image),
                 );
               },

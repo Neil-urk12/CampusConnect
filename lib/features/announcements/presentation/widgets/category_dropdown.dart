@@ -162,12 +162,12 @@ class CategoryDropdown extends ConsumerWidget {
           children: [
             if (categories.isEmpty)
               Card(
-                color: Colors.orange.shade50,
+                color: DesignTokens.surfaceContainerHigh,
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: Colors.orange.shade700),
+                      Icon(Icons.info_outline, color: DesignTokens.onSurfaceVariant),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
@@ -222,7 +222,7 @@ class CategoryDropdown extends ConsumerWidget {
         ),
       ),
       error: (error, stack) => Card(
-        color: Colors.red.shade50,
+        color: DesignTokens.errorContainer,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -230,7 +230,7 @@ class CategoryDropdown extends ConsumerWidget {
             children: [
               Text(
                 'Error loading categories: $error',
-                style: const TextStyle(color: Colors.red),
+                style: TextStyle(color: DesignTokens.error),
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(

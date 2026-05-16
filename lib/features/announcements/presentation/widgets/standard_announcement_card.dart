@@ -24,7 +24,7 @@ class StandardAnnouncementCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: theme.colorScheme.outline.withOpacity(0.5),
+          color: theme.colorScheme.outline.withOpacity(0.3),
           width: 1,
         ),
       ),

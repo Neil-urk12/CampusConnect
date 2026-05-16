@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/announcement_form_provider.dart';
 import '../image_picker_field.dart';
+import '../../../../../core/theme/design_tokens.dart';
 
 /// Step 3: Extras - Tags, Image Upload, and Conditional CTA
 class Step3Extras extends ConsumerStatefulWidget {
@@ -81,7 +82,7 @@ class _Step3ExtrasState extends ConsumerState<Step3Extras> {
             const SizedBox(height: 8),
             const Text(
               'Add a button to your pinned announcement',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
+              style: TextStyle(color: DesignTokens.onSurfaceVariant, fontSize: 12),
             ),
             const SizedBox(height: 16),
 
@@ -118,7 +119,7 @@ class _Step3ExtrasState extends ConsumerState<Step3Extras> {
                   padding: EdgeInsets.only(top: 8.0),
                   child: Text(
                     'Both CTA label and URL are required',
-                    style: TextStyle(color: Colors.red, fontSize: 12),
+                    style: TextStyle(color: DesignTokens.error, fontSize: 12),
                   ),
                 ),
               if (formState.ctaUrl?.isNotEmpty ?? false)
@@ -128,7 +129,7 @@ class _Step3ExtrasState extends ConsumerState<Step3Extras> {
                     padding: EdgeInsets.only(top: 8.0),
                     child: Text(
                       'URL must start with http:// or https://',
-                      style: TextStyle(color: Colors.red, fontSize: 12),
+                      style: TextStyle(color: DesignTokens.error, fontSize: 12),
                     ),
                   ),
             ],

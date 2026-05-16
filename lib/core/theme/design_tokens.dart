@@ -39,6 +39,10 @@ class DesignTokens {
   static const onError = Color(0xFFFFFFFF);
   static const errorContainer = Color(0xFFFFDAD6);
   static const onErrorContainer = Color(0xFF410002);
+  static const success = Color(0xFF388E3C);
+  static const onSuccess = Color(0xFFFFFFFF);
+  static const successContainer = Color(0xFFA5D6A7);
+  static const onSuccessContainer = Color(0xFF1B5E20);
 
   // Category Colors (for events)
   static const categoryAcademic = Color(0xFF0EA5E9);

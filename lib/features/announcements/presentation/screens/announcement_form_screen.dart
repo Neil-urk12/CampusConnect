@@ -5,6 +5,7 @@ import '../providers/announcement_form_provider.dart';
 import '../widgets/form_steps/step_1_basics.dart';
 import '../widgets/form_steps/step_2_targeting.dart';
 import '../widgets/form_steps/step_3_extras.dart';
+import '../../../../core/theme/design_tokens.dart';
 
 /// Screen for creating or editing announcements with a 3-step stepper
 class AnnouncementFormScreen extends ConsumerStatefulWidget {
@@ -102,7 +103,7 @@ class _AnnouncementFormScreenState
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
+                backgroundColor: DesignTokens.error,
               ),
               child: const Text('Discard'),
             ),
@@ -125,7 +126,7 @@ class _AnnouncementFormScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error),
-          backgroundColor: Theme.of(context).colorScheme.error,
+          backgroundColor: DesignTokens.error,
         ),
       );
       return;
@@ -161,7 +162,7 @@ class _AnnouncementFormScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error),
-          backgroundColor: Theme.of(context).colorScheme.error,
+          backgroundColor: DesignTokens.error,
         ),
       );
       return;
@@ -179,11 +180,7 @@ class _AnnouncementFormScreenState
                   ? 'Announcement updated successfully'
                   : 'Announcement created successfully',
             ),
-            backgroundColor:
-                Theme.of(
-                  context,
-                ).extension<ThemeData>()?.colorScheme.tertiary ??
-                Colors.green,
+            backgroundColor: DesignTokens.success,
           ),
         );
         Navigator.of(context).pop(true);
@@ -192,7 +189,7 @@ class _AnnouncementFormScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage ?? 'Failed to submit'),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            backgroundColor: DesignTokens.error,
           ),
         );
       }

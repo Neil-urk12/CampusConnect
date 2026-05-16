@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/announcement_entity.dart';
+import '../../../../core/theme/design_tokens.dart';
 
 /// Urgent announcement card with red accent and prominent styling
 class UrgentAnnouncementCard extends StatelessWidget {
@@ -17,14 +18,14 @@ class UrgentAnnouncementCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM d, yyyy • h:mm a');
-    const urgentColor = Color(0xFFC83232); // Academic Pulse red accent
+    final urgentColor = DesignTokens.error;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: urgentColor, width: 1.5),
+        side: BorderSide(color: urgentColor, width: 1.5),
       ),
       child: InkWell(
         onTap: onTap,
@@ -32,7 +33,7 @@ class UrgentAnnouncementCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            color: Colors.white,
+            color: DesignTokens.surfaceContainerLowest,
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -54,16 +55,16 @@ class UrgentAnnouncementCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.warning_rounded,
                             size: 16,
-                            color: Colors.white,
+                            color: DesignTokens.onPrimary,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             'URGENT',
                             style: theme.textTheme.labelMedium?.copyWith(
-                              color: Colors.white,
+                              color: DesignTokens.onPrimary,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.5,
                             ),
@@ -106,7 +107,7 @@ class UrgentAnnouncementCard extends StatelessWidget {
                       child: announcement.authorAvatarUrl == null
                           ? Text(
                               announcement.authorName[0].toUpperCase(),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: urgentColor,
                                 fontWeight: FontWeight.w700,
                               ),

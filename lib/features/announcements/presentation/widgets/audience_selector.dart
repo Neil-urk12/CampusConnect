@@ -24,7 +24,7 @@ class AudienceSelector extends ConsumerWidget {
         const SizedBox(height: 8),
         const Text(
           'Select who should see this announcement',
-          style: TextStyle(color: Colors.grey, fontSize: 12),
+          style: TextStyle(color: DesignTokens.onSurfaceVariant, fontSize: 12),
         ),
         const SizedBox(height: 4),
         Container(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/announcement_form_provider.dart';
 import '../category_dropdown.dart';
 import '../audience_selector.dart';
+import '../../../../../core/theme/design_tokens.dart';
 
 /// Step 2: Targeting - Category and Target Audience
 class Step2Targeting extends ConsumerWidget {
@@ -32,7 +33,7 @@ class Step2Targeting extends ConsumerWidget {
                 padding: EdgeInsets.only(top: 8.0),
                 child: Text(
                   'Category is required',
-                  style: TextStyle(color: Colors.red, fontSize: 12),
+                  style: TextStyle(color: DesignTokens.error, fontSize: 12),
                 ),
               ),
             if (formState.targetAudience.isEmpty)
@@ -40,7 +41,7 @@ class Step2Targeting extends ConsumerWidget {
                 padding: EdgeInsets.only(top: 8.0),
                 child: Text(
                   'Select at least one audience',
-                  style: TextStyle(color: Colors.red, fontSize: 12),
+                  style: TextStyle(color: DesignTokens.error, fontSize: 12),
                 ),
               ),
           ],
