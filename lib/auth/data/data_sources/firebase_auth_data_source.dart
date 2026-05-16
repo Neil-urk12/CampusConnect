@@ -120,4 +120,50 @@ class FirebaseAuthDataSource {
       rethrow;
     }
   }
+
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) {
+        AppLogger.error('No authenticated user for password update');
+        throw FirebaseAuthException(
+          code: 'user-not-found',
+          message: 'No authenticated user',
+        );
+      }
+
+      final email = user.email;
+      if (email == null) {
+        AppLogger.error('User email is null for password update');
+        throw FirebaseAuthException(
+          code: 'invalid-email',
+          message: 'User email not available',
+        );
+      }
+
+      AppLogger.debug('Attempting password update for user: ${user.uid}');
+
+      // Reauthenticate with current password
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+      AppLogger.debug('Reauthentication successful');
+
+      // Update to new password
+      await user.updatePassword(newPassword);
+      AppLogger.info('Password updated successfully for user: ${user.uid}');
+    } on FirebaseAuthException catch (e) {
+      AppLogger.error('Password update failed with code: ${e.code}', error: e);
+      rethrow;
+    } catch (e) {
+      AppLogger.error('Unexpected error during password update', error: e);
+      rethrow;
+    }
+  }
 }

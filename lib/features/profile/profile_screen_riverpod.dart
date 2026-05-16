@@ -4,11 +4,11 @@ import '../../auth/domain/entities/user_entity.dart';
 import '../../auth/domain/user_display_name.dart';
 import '../../providers/auth_providers.dart';
 import 'edit_personal_info_screen.dart';
+import 'security_settings_screen.dart';
 import '../../core/theme/design_tokens.dart';
 
 class ProfileScreenRiverpod extends ConsumerWidget {
   const ProfileScreenRiverpod({super.key});
-
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -67,7 +67,11 @@ class ProfileScreenRiverpod extends ConsumerWidget {
                     color: DesignTokens.surfaceTint.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.person, size: 50, color: DesignTokens.surfaceTint),
+                  child: Icon(
+                    Icons.person,
+                    size: 50,
+                    color: DesignTokens.surfaceTint,
+                  ),
                 ),
                 const SizedBox(height: DesignTokens.spacing16),
                 Text(
@@ -81,7 +85,10 @@ class ProfileScreenRiverpod extends ConsumerWidget {
                 const SizedBox(height: DesignTokens.spacing4),
                 Text(
                   user.email,
-                  style: TextStyle(fontSize: 14, color: DesignTokens.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: DesignTokens.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -110,8 +117,11 @@ class ProfileScreenRiverpod extends ConsumerWidget {
             title: 'Security',
             subtitle: 'Change password and security settings',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Security settings coming soon')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const SecuritySettingsScreen(),
+                ),
               );
             },
           ),
@@ -167,7 +177,9 @@ class ProfileScreenRiverpod extends ConsumerWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: DesignTokens.errorContainer,
               foregroundColor: DesignTokens.onErrorContainer,
-              padding: const EdgeInsets.symmetric(vertical: DesignTokens.spacing16),
+              padding: const EdgeInsets.symmetric(
+                vertical: DesignTokens.spacing16,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -232,7 +244,10 @@ class ProfileScreenRiverpod extends ConsumerWidget {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 13, color: DesignTokens.onSurfaceVariant),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: DesignTokens.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),

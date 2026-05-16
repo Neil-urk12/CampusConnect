@@ -45,9 +45,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     try {
-      AppLogger.debug(
-        'AuthRepository: Attempting sign in for email: $email',
-      );
+      AppLogger.debug('AuthRepository: Attempting sign in for email: $email');
 
       final credential = await _authDataSource.signInWithEmailAndPassword(
         email: email,
@@ -70,12 +68,12 @@ class AuthRepositoryImpl implements AuthRepository {
         AppLogger.debug(
           'AuthRepository: User metadata not found for userId: $userId',
         );
-        throw const AuthException(message: 'User data not found. Please contact support.');
+        throw const AuthException(
+          message: 'User data not found. Please contact support.',
+        );
       }
 
-      AppLogger.debug(
-        'AuthRepository: Sign in complete for userId: $userId',
-      );
+      AppLogger.debug('AuthRepository: Sign in complete for userId: $userId');
 
       return userEntity;
     } on FirebaseAuthException catch (e) {
@@ -124,7 +122,9 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       if (credential.user == null) {
-        throw const AuthException(message: 'Registration failed: No user returned');
+        throw const AuthException(
+          message: 'Registration failed: No user returned',
+        );
       }
 
       final userId = credential.user!.uid;
@@ -161,15 +161,11 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> signOut() async {
     try {
-      AppLogger.debug(
-        'AuthRepository: Attempting sign out',
-      );
+      AppLogger.debug('AuthRepository: Attempting sign out');
 
       await _authDataSource.signOut();
 
-      AppLogger.debug(
-        'AuthRepository: Sign out successful',
-      );
+      AppLogger.debug('AuthRepository: Sign out successful');
     } on FirebaseAuthException catch (e) {
       AppLogger.debug(
         'AuthRepository: Firebase auth error during sign out: ${e.code}',
@@ -203,9 +199,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       await _authDataSource.sendPasswordResetEmail(email: email);
 
-      AppLogger.debug(
-        'AuthRepository: Password reset email sent successfully',
-      );
+      AppLogger.debug('AuthRepository: Password reset email sent successfully');
     } on FirebaseAuthException catch (e) {
       AppLogger.debug(
         'AuthRepository: Firebase auth error sending password reset: ${e.code}',
@@ -217,7 +211,9 @@ class AuthRepositoryImpl implements AuthRepository {
         'AuthRepository: Unexpected error sending password reset email',
         error: e,
       );
-      throw AuthException(message: 'Failed to send password reset email: ${e.toString()}');
+      throw AuthException(
+        message: 'Failed to send password reset email: ${e.toString()}',
+      );
     }
   }
 
@@ -232,16 +228,12 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<UserEntity?> getCurrentUser() async {
     try {
-      AppLogger.debug(
-        'AuthRepository: Getting current user',
-      );
+      AppLogger.debug('AuthRepository: Getting current user');
 
       final firebaseUser = _authDataSource.getCurrentUser();
 
       if (firebaseUser == null) {
-        AppLogger.debug(
-          'AuthRepository: No user currently authenticated',
-        );
+        AppLogger.debug('AuthRepository: No user currently authenticated');
         return null;
       }
 
@@ -261,16 +253,11 @@ class AuthRepositoryImpl implements AuthRepository {
         return null;
       }
 
-      AppLogger.debug(
-        'AuthRepository: Current user retrieved successfully',
-      );
+      AppLogger.debug('AuthRepository: Current user retrieved successfully');
 
       return userEntity;
     } catch (e) {
-      AppLogger.debug(
-        'AuthRepository: Error getting current user',
-        error: e,
-      );
+      AppLogger.debug('AuthRepository: Error getting current user', error: e);
       // Return null instead of throwing to allow graceful handling
       return null;
     }
@@ -279,9 +266,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Stream<UserEntity?> authStateChanges() {
     try {
-      AppLogger.debug(
-        'AuthRepository: Creating auth state changes stream',
-      );
+      AppLogger.debug('AuthRepository: Creating auth state changes stream');
 
       return _authDataSource.authStateChanges().asyncMap((firebaseUser) async {
         if (firebaseUser == null) {
@@ -327,49 +312,124 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  /// Changes the user's password after verifying current password.
+  ///
+  /// Process:
+  /// 1. Calls Firebase Auth to reauthenticate with current password
+  /// 2. Updates password to new value
+  ///
+  /// Throws:
+  /// - [AuthException] for incorrect current password
+  /// - [AuthException] for network connectivity issues
+  /// - [AuthException] for Firebase service unavailability
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      AppLogger.debug('AuthRepository: Attempting password change');
+
+      await _authDataSource.updatePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+
+      AppLogger.debug('AuthRepository: Password change successful');
+    } on FirebaseAuthException catch (e) {
+      AppLogger.debug(
+        'AuthRepository: Firebase auth error during password change: ${e.code}',
+        error: e,
+      );
+      throw _mapFirebaseAuthException(e);
+    } catch (e) {
+      AppLogger.debug(
+        'AuthRepository: Unexpected error during password change',
+        error: e,
+      );
+      throw AuthException(message: 'Password change failed: ${e.toString()}');
+    }
+  }
+
   /// Maps Firebase Authentication exceptions to domain exceptions.
   AuthException _mapFirebaseAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
       case 'wrong-password':
-        return const AuthException(code: AuthException.invalidCredentials, message: 'Invalid email or password.');
+        return const AuthException(
+          code: AuthException.invalidCredentials,
+          message: 'Current password is incorrect',
+        );
 
       case 'invalid-email':
-        return const AuthException(code: AuthException.validationError, message: 'Please enter a valid email address.', field: 'email');
+        return const AuthException(
+          code: AuthException.validationError,
+          message: 'Please enter a valid email address.',
+          field: 'email',
+        );
 
       case 'user-disabled':
-        return const AuthException(code: AuthException.userDisabled, message: 'This account has been disabled. Please contact support.');
+        return const AuthException(
+          code: AuthException.userDisabled,
+          message: 'This account has been disabled. Please contact support.',
+        );
 
       case 'email-already-in-use':
-        return const AuthException(code: AuthException.emailAlreadyInUse, message: 'This email is already registered. Please sign in instead.');
+        return const AuthException(
+          code: AuthException.emailAlreadyInUse,
+          message: 'This email is already registered. Please sign in instead.',
+        );
 
       case 'weak-password':
-        return const AuthException(code: AuthException.validationError, message: 'Password must be at least 6 characters long.', field: 'password');
+        return const AuthException(
+          code: AuthException.validationError,
+          message: 'Password must be at least 6 characters long.',
+          field: 'password',
+        );
 
       case 'too-many-requests':
-        return const AuthException(code: AuthException.tooManyRequests, message: 'Too many failed attempts. Please try again later.');
+        return const AuthException(
+          code: AuthException.tooManyRequests,
+          message: 'Too many failed attempts. Please try again later.',
+        );
 
       case 'network-request-failed':
-        return const AuthException(code: AuthException.networkError, message: 'Network error. Please check your connection.');
+        return const AuthException(
+          code: AuthException.networkError,
+          message: 'Network error. Please check your connection.',
+        );
 
       case 'operation-not-allowed':
-        return const AuthException(code: AuthException.operationNotAllowed, message: 'This operation is not allowed. Please contact support.');
+        return const AuthException(
+          code: AuthException.operationNotAllowed,
+          message: 'This operation is not allowed. Please contact support.',
+        );
 
       case 'internal-error':
-        return const AuthException(code: AuthException.serviceError, message: 'An internal error occurred. Please try again.');
+        return const AuthException(
+          code: AuthException.serviceError,
+          message: 'An internal error occurred. Please try again.',
+        );
 
       case 'invalid-credential':
-        return const AuthException(code: AuthException.invalidCredentials, message: 'Invalid credentials provided.');
+        return const AuthException(
+          code: AuthException.invalidCredentials,
+          message: 'Invalid credentials provided.',
+        );
 
       case 'user-token-expired':
       case 'requires-recent-login':
-        return const AuthException(code: AuthException.sessionExpired, message: 'Your session has expired. Please sign in again.');
+        return const AuthException(
+          code: AuthException.sessionExpired,
+          message: 'Your session has expired. Please sign in again.',
+        );
 
       default:
-        AppLogger.debug(
-          'Unmapped Firebase auth error code: ${e.code}',
+        AppLogger.debug('Unmapped Firebase auth error code: ${e.code}');
+        return AuthException(
+          code: e.code,
+          message: 'An unexpected error occurred. Please try again.',
         );
-        return AuthException(code: e.code, message: 'An unexpected error occurred. Please try again.');
     }
   }
 }

@@ -8,6 +8,7 @@ class AuthValidator {
   static final RegExp _studentIdRegex = RegExp(r'^[a-zA-Z0-9]{6,10}$');
 
   static const int _minPasswordLength = 6;
+  static const int _minPasswordLengthStrict = 8;
 
   static String? validateEmail(String email) {
     final trimmedEmail = email.trim();
@@ -23,6 +24,8 @@ class AuthValidator {
     return null;
   }
 
+  /// Validates password with 6-character minimum.
+  /// Use for current password validation (supports legacy accounts).
   static String? validatePassword(String password) {
     if (password.isEmpty) {
       return 'Password is required';
@@ -30,6 +33,20 @@ class AuthValidator {
 
     if (password.length < _minPasswordLength) {
       return 'Password must be at least $_minPasswordLength characters';
+    }
+
+    return null;
+  }
+
+  /// Validates password with 8-character minimum.
+  /// Use for new password validation (stricter security requirement).
+  static String? validatePasswordStrict(String password) {
+    if (password.isEmpty) {
+      return 'Password is required';
+    }
+
+    if (password.length < _minPasswordLengthStrict) {
+      return 'Password must be at least $_minPasswordLengthStrict characters';
     }
 
     return null;

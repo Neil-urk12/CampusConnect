@@ -7,4 +7,8 @@ abstract class AuthRepository {
   Future<void> sendPasswordResetEmail({required String email});
   Future<UserEntity?> getCurrentUser();
   Stream<UserEntity?> authStateChanges();
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
 }
