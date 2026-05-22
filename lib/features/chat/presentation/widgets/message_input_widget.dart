@@ -141,8 +141,8 @@ class _MessageInputWidgetState extends ConsumerState<MessageInputWidget> {
         attachmentUrl = attachmentDraft.metadata.url;
       }
 
-      final messageService = ref.read(messageServiceProvider);
-      await messageService.sendMessage(
+      final messageRepository = ref.read(messageRepositoryProvider);
+      await messageRepository.sendMessage(
         chatId: widget.chatId,
         senderId: user.userId,
         senderName: user.fullName,

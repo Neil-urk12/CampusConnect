@@ -133,8 +133,8 @@ class _EditGroupChatBottomSheetState
         // avatar is preserved.
       }
 
-      final service = ref.read(groupChatServiceProvider);
-      await service.updateGroupChat(
+      final repository = ref.read(groupChatRepositoryProvider);
+      await repository.updateGroupChat(
         chatId: widget.groupChat.id,
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim().isEmpty

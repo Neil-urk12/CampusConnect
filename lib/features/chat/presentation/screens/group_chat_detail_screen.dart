@@ -46,8 +46,8 @@ class _GroupChatDetailScreenState extends ConsumerState<GroupChatDetailScreen> {
     });
 
     try {
-      final service = ref.read(groupChatServiceProvider);
-      await service.addMembers(widget.chatId, [user.userId]);
+      final repository = ref.read(groupChatRepositoryProvider);
+      await repository.addMembers(widget.chatId, [user.userId]);
 
       // Refresh the chat data to reflect the new membership
       ref.invalidate(groupChatByIdProvider(widget.chatId));

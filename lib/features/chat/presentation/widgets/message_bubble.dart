@@ -65,8 +65,8 @@ class MessageBubble extends ConsumerWidget {
 
     if (confirmed == true && context.mounted) {
       try {
-        final messageService = ref.read(messageServiceProvider);
-        await messageService.deleteMessage(chatId, message.id);
+        final messageRepository = ref.read(messageRepositoryProvider);
+        await messageRepository.deleteMessage(chatId, message.id);
 
         if (context.mounted) {
           ScaffoldMessenger.of(

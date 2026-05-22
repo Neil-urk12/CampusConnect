@@ -125,8 +125,8 @@ class _CreateGroupChatBottomSheetState
         avatarUrl = await _uploadAvatar();
       }
 
-      final service = ref.read(groupChatServiceProvider);
-      await service.createGroupChat(
+      final repository = ref.read(groupChatRepositoryProvider);
+      await repository.createGroupChat(
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim().isEmpty
             ? null
