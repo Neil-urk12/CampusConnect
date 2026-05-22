@@ -2,6 +2,7 @@ import '../../../core/utils/app_logger.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/exceptions/auth_exception.dart';
+import '../../domain/exceptions/firestore_error_mapper.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../data_sources/firestore_user_data_source.dart';
 import '../models/user_model.dart';
@@ -72,7 +73,7 @@ class UserRepositoryImpl implements UserRepository {
         'UserRepository: Firestore error creating metadata: ${e.code}',
         error: e,
       );
-      throw _mapFirestoreException(e, 'create user metadata');
+      throw FirestoreMapper.mapException(e, 'create user metadata');
     } catch (e) {
       AppLogger.debug(
         'UserRepository: Unexpected error creating metadata',
@@ -129,7 +130,7 @@ class UserRepositoryImpl implements UserRepository {
         'UserRepository: Firestore error fetching metadata: ${e.code}',
         error: e,
       );
-      throw _mapFirestoreException(e, 'fetch user metadata');
+      throw FirestoreMapper.mapException(e, 'fetch user metadata');
     } on FormatException catch (e) {
       AppLogger.debug(
         'UserRepository: Document format error for userId: $userId',
@@ -196,7 +197,7 @@ class UserRepositoryImpl implements UserRepository {
         'UserRepository: Firestore error updating metadata: ${e.code}',
         error: e,
       );
-      throw _mapFirestoreException(e, 'update user metadata');
+      throw FirestoreMapper.mapException(e, 'update user metadata');
     } catch (e) {
       AppLogger.debug(
         'UserRepository: Unexpected error updating metadata',
@@ -223,60 +224,4 @@ class UserRepositoryImpl implements UserRepository {
     }
   }
 
-  /// Maps Firestore exceptions to domain-specific AuthExceptions.
-  ///
-  /// This provides consistent error handling across all Firestore operations
-  /// and translates Firebase error codes into user-friendly messages that
-  /// match the design document specifications.
-  ///
-  /// Requirements: 7.5, 10.3
-  AuthException _mapFirestoreException(FirebaseException e, String operation) {
-    switch (e.code) {
-      case 'permission-denied':
-        return AuthException(code: AuthException.permissionDenied, message: 'Access denied. Please sign in again.');
-
-      case 'not-found':
-        return AuthException(code: AuthException.notFound, message: 'User data not found.');
-
-      case 'unavailable':
-        return AuthException(code: AuthException.unavailable, message: 'Service temporarily unavailable. Please try again.');
-
-      case 'deadline-exceeded':
-        return AuthException(code: AuthException.deadlineExceeded, message: 'Request timed out. Please check your connection.');
-
-      case 'already-exists':
-        return AuthException(code: AuthException.alreadyExists, message: 'User already exists.');
-
-      case 'resource-exhausted':
-        return AuthException(code: AuthException.resourceExhausted, message: 'Too many requests. Please try again later.');
-
-      case 'cancelled':
-        return AuthException(code: AuthException.cancelled, message: 'Operation was cancelled.');
-
-      case 'data-loss':
-      case 'internal':
-        return AuthException(code: AuthException.internalError, message: 'Internal error occurred. Please try again.');
-
-      case 'invalid-argument':
-        return AuthException(code: AuthException.invalidArgument, message: 'Invalid data provided.');
-
-      case 'failed-precondition':
-        return AuthException(code: AuthException.failedPrecondition, message: 'Operation cannot be performed in current state.');
-
-      case 'aborted':
-        return AuthException(code: AuthException.aborted, message: 'Operation was aborted. Please try again.');
-
-      case 'out-of-range':
-        return AuthException(code: AuthException.invalidArgument, message: 'Invalid data range.');
-
-      case 'unimplemented':
-        return AuthException(code: 'unexpected', message: 'This operation is not supported.');
-
-      default:
-        AppLogger.debug(
-          'Unmapped Firestore error code: ${e.code}',
-        );
-        return AuthException(code: AuthException.userDataError, message: 'Failed to $operation: ${e.message ?? "Unknown error"}');
-    }
-  }
 }

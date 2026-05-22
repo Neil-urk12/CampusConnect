@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/exceptions/auth_exception.dart';
+import '../../domain/exceptions/firestore_error_mapper.dart';
 import '../../../core/utils/app_logger.dart';
 
 class FirestoreUserDataSource {
@@ -36,7 +37,7 @@ class FirestoreUserDataSource {
     } on FirebaseException catch (e) {
       AppLogger.error('Firestore error creating user: ${e.code}', error: e);
 
-      throw _mapFirestoreException(e, 'create user');
+      throw FirestoreMapper.mapException(e, 'create user');
     } catch (e) {
       AppLogger.error('Unexpected error creating user', error: e);
 
@@ -64,7 +65,7 @@ class FirestoreUserDataSource {
     } on FirebaseException catch (e) {
       AppLogger.error('Firestore error fetching user: ${e.code}', error: e);
 
-      throw _mapFirestoreException(e, 'fetch user');
+      throw FirestoreMapper.mapException(e, 'fetch user');
     } catch (e) {
       AppLogger.error('Unexpected error fetching user', error: e);
 
@@ -95,35 +96,11 @@ class FirestoreUserDataSource {
     } on FirebaseException catch (e) {
       AppLogger.error('Firestore error updating user: ${e.code}', error: e);
 
-      throw _mapFirestoreException(e, 'update user');
+      throw FirestoreMapper.mapException(e, 'update user');
     } catch (e) {
       AppLogger.error('Unexpected error updating user', error: e);
 
       throw AuthException(message: 'Failed to update user: ${e.toString()}');
-    }
-  }
-
-  AuthException _mapFirestoreException(FirebaseException e, String operation) {
-    switch (e.code) {
-      case 'permission-denied':
-        return AuthException(code: AuthException.permissionDenied, message: 'Access denied. Please sign in again.');
-      case 'not-found':
-        return AuthException(code: AuthException.notFound, message: 'User data not found.');
-      case 'unavailable':
-        return AuthException(code: AuthException.unavailable, message: 'Service temporarily unavailable. Please try again.');
-      case 'deadline-exceeded':
-        return AuthException(code: AuthException.deadlineExceeded, message: 'Request timed out. Please check your connection.');
-      case 'already-exists':
-        return AuthException(code: AuthException.alreadyExists, message: 'User already exists.');
-      case 'resource-exhausted':
-        return AuthException(code: AuthException.resourceExhausted, message: 'Too many requests. Please try again later.');
-      case 'cancelled':
-        return AuthException(code: AuthException.cancelled, message: 'Operation was cancelled.');
-      case 'data-loss':
-      case 'internal':
-        return AuthException(code: AuthException.internalError, message: 'Internal error occurred. Please try again.');
-      default:
-        return AuthException(code: AuthException.userDataError, message: 'Failed to $operation: ${e.message ?? "Unknown error"}');
     }
   }
 }
