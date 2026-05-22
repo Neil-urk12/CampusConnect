@@ -100,13 +100,19 @@ class EventService {
   ///
   /// Throws [EventValidationException] if eventId or userId is empty.
   /// Throws [EventNotFoundException] if the event doesn't exist.
-  /// Throws [EventRsvpException] if RSVP creation fails.
+  /// Throws [EventRsvpException] if user already has an RSVP or if RSVP creation fails.
   Future<RsvpEntity> attendEvent(String eventId, String userId) async {
     if (eventId.isEmpty) {
       throw EventValidationException('Event ID cannot be empty');
     }
     if (userId.isEmpty) {
       throw EventValidationException('User ID cannot be empty');
+    }
+
+    // Check if user already has an RSVP
+    final existingRsvp = await getUserRsvp(eventId, userId);
+    if (existingRsvp != null) {
+      throw EventRsvpException('You have already RSVP\'d to this event');
     }
 
     // Fetch event to check capacity

@@ -186,7 +186,8 @@ class EventDetailScreen extends ConsumerWidget {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(message)));
-        // Stream provider will update automatically - no need to invalidate
+        // Invalidate the RSVP provider to refresh the button state
+        ref.invalidate(userRsvpProvider(eventId));
       }
     } on EventRsvpException catch (e) {
       if (context.mounted) {
@@ -220,7 +221,8 @@ class EventDetailScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Your RSVP has been cancelled')),
         );
-        // Stream provider will update automatically - no need to invalidate
+        // Invalidate the RSVP provider to refresh the button state
+        ref.invalidate(userRsvpProvider(eventId));
       }
     } on EventRsvpException catch (e) {
       if (context.mounted) {
@@ -256,7 +258,8 @@ class EventDetailScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('You\'re now attending this event!')),
         );
-        // Stream provider will update automatically - no need to invalidate
+        // Invalidate the RSVP provider to refresh the button state
+        ref.invalidate(userRsvpProvider(eventId));
       }
     } on EventRsvpException catch (e) {
       if (context.mounted) {
@@ -622,6 +625,7 @@ class EventDetailScreen extends ConsumerWidget {
         );
       case _ButtonStyle.outlined:
         return OutlinedButton.styleFrom(
+          backgroundColor: Colors.white,
           foregroundColor: DesignTokens.primary,
           side: const BorderSide(color: DesignTokens.primary),
           shape: RoundedRectangleBorder(

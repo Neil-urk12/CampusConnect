@@ -185,6 +185,7 @@ class FirestoreEventDataSource {
   ///
   /// Transaction ensures:
   /// - Read event document
+  /// - Check that RSVP doesn't already exist
   /// - Check capacity and determine status (attending or waitlisted)
   /// - Create RSVP document
   /// - Update attendeeCount only if status is attending
@@ -201,6 +202,14 @@ class FirestoreEventDataSource {
 
         if (!eventSnapshot.exists) {
           throw EventNotFoundException(eventId);
+        }
+
+        // Check if RSVP already exists
+        final rsvpRef = eventRef.collection('rsvps').doc(userId);
+        final existingRsvpSnapshot = await transaction.get(rsvpRef);
+
+        if (existingRsvpSnapshot.exists) {
+          throw EventRsvpException('User already has an RSVP for this event');
         }
 
         final eventData = eventSnapshot.data()!;
@@ -223,7 +232,6 @@ class FirestoreEventDataSource {
           updatedAt: now,
         );
 
-        final rsvpRef = eventRef.collection('rsvps').doc(userId);
         transaction.set(rsvpRef, rsvpModel.toFirestore());
 
         // Update attendeeCount only if status is attending
@@ -234,7 +242,7 @@ class FirestoreEventDataSource {
         return rsvpModel;
       });
     } catch (e) {
-      if (e is EventNotFoundException) rethrow;
+      if (e is EventNotFoundException || e is EventRsvpException) rethrow;
       throw EventRsvpException('Failed to create RSVP: $e');
     }
   }
@@ -244,6 +252,7 @@ class FirestoreEventDataSource {
   ///
   /// Transaction ensures:
   /// - Read RSVP to check status
+  /// - Read event document (if needed)
   /// - Delete RSVP document
   /// - Decrement attendeeCount only if status was attending
   Future<void> deleteRsvp({
@@ -266,17 +275,23 @@ class FirestoreEventDataSource {
           (e) => e.name == rsvpData['status'],
         );
 
+        // Read event document if we need to decrement attendeeCount
+        // (All reads must happen before writes in Firestore transactions)
+        DocumentSnapshot? eventSnapshot;
+        if (status == RsvpStatus.attending) {
+          eventSnapshot = await transaction.get(eventRef);
+        }
+
         // Delete RSVP document
         transaction.delete(rsvpRef);
 
         // Decrement attendeeCount only if user was attending
-        if (status == RsvpStatus.attending) {
-          final eventSnapshot = await transaction.get(eventRef);
+        if (status == RsvpStatus.attending && eventSnapshot != null) {
           if (eventSnapshot.exists) {
-            final attendeeCount =
-                eventSnapshot.data()!['attendeeCount'] as int? ?? 0;
+            final attendeeCount = eventSnapshot.data()! as Map<String, dynamic>;
+            final currentCount = attendeeCount['attendeeCount'] as int? ?? 0;
             transaction.update(eventRef, {
-              'attendeeCount': attendeeCount > 0 ? attendeeCount - 1 : 0,
+              'attendeeCount': currentCount > 0 ? currentCount - 1 : 0,
             });
           }
         }

@@ -86,12 +86,14 @@ final userRsvpProvider = FutureProvider.family<RsvpEntity?, String>((
 // State class for event screen
 class EventScreenState {
   final DateTime? selectedDate;
+  final EventCategory? selectedCategory;
   final List<EventEntity> filteredEvents;
   final bool isLoading;
   final String? errorMessage;
 
   const EventScreenState({
     this.selectedDate,
+    this.selectedCategory,
     this.filteredEvents = const [],
     this.isLoading = false,
     this.errorMessage,
@@ -99,22 +101,29 @@ class EventScreenState {
 
   EventScreenState copyWith({
     DateTime? selectedDate,
+    EventCategory? selectedCategory,
     List<EventEntity>? filteredEvents,
     bool? isLoading,
     String? errorMessage,
   }) {
     return EventScreenState(
       selectedDate: selectedDate ?? this.selectedDate,
+      selectedCategory: selectedCategory ?? this.selectedCategory,
       filteredEvents: filteredEvents ?? this.filteredEvents,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
+
+  EventScreenState clearFilters() {
+    return const EventScreenState();
+  }
 }
 
-// EventStateNotifier for managing selected date and filtered events
+// EventStateNotifier for managing selected date, category, and filtered events
 class EventStateNotifier extends Notifier<EventScreenState> {
   StreamSubscription<List<EventEntity>>? _eventsSubscription;
+  List<EventEntity> _allEvents = [];
 
   @override
   EventScreenState build() {
@@ -130,9 +139,13 @@ class EventStateNotifier extends Notifier<EventScreenState> {
     final repository = ref.read(eventRepositoryProvider);
     _eventsSubscription = repository.streamAllUpcomingEvents().listen(
       (events) {
+        _allEvents = events;
         // Only update if we're showing all events (no date filter)
         if (state.selectedDate == null) {
-          state = state.copyWith(filteredEvents: events, isLoading: false);
+          state = state.copyWith(
+            filteredEvents: _applyCategoryFilter(events),
+            isLoading: false,
+          );
         }
       },
       onError: (e) {
@@ -141,13 +154,39 @@ class EventStateNotifier extends Notifier<EventScreenState> {
     );
   }
 
+  List<EventEntity> _applyCategoryFilter(List<EventEntity> events) {
+    final category = state.selectedCategory;
+    if (category == null) return events;
+    return events.where((e) => e.category == category).toList();
+  }
+
   void selectDate(DateTime date) {
     state = state.copyWith(selectedDate: date);
   }
 
+  void selectCategory(EventCategory? category) {
+    state = state.copyWith(selectedCategory: category);
+    if (state.selectedDate == null) {
+      // Apply category filter to cached events, or reload if we have none
+      if (_allEvents.isNotEmpty) {
+        state = state.copyWith(
+          filteredEvents: _applyCategoryFilter(_allEvents),
+        );
+      } else {
+        loadAllUpcomingEvents();
+      }
+    } else {
+      // Reload events for the selected date with category filter
+      loadEventsForDate(state.selectedDate!);
+    }
+  }
+
   void clearDateFilter() {
-    state = state.copyWith(selectedDate: null, filteredEvents: []);
-    // Reload all upcoming events
+    state = state.copyWith(
+      selectedDate: null,
+      selectedCategory: null,
+      filteredEvents: [],
+    );
     loadAllUpcomingEvents();
   }
 
@@ -161,7 +200,10 @@ class EventStateNotifier extends Notifier<EventScreenState> {
         startOfDay,
         endOfDay,
       );
-      state = state.copyWith(filteredEvents: events, isLoading: false);
+      state = state.copyWith(
+        filteredEvents: _applyCategoryFilter(events),
+        isLoading: false,
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
@@ -172,7 +214,11 @@ class EventStateNotifier extends Notifier<EventScreenState> {
     try {
       final service = ref.read(eventServiceProvider);
       final events = await service.getAllUpcomingEvents();
-      state = state.copyWith(filteredEvents: events, isLoading: false);
+      _allEvents = events;
+      state = state.copyWith(
+        filteredEvents: _applyCategoryFilter(events),
+        isLoading: false,
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }

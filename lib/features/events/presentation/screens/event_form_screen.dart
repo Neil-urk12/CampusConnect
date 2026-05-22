@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../attachments/domain/attachment_types.dart';
+import '../../../../attachments/providers/attachment_providers.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../providers/auth_providers.dart';
 import '../../domain/entities/event_entity.dart';
@@ -22,13 +26,16 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
   final _capacityController = TextEditingController();
-  final _imageUrlController = TextEditingController();
+  final _imagePicker = ImagePicker();
 
   DateTime _startDateTime = DateTime.now().add(const Duration(days: 1));
   DateTime? _endDateTime;
   EventCategory _selectedCategory = EventCategory.academic;
   bool _isPublished = true;
   bool _isLoading = false;
+  File? _selectedImage;
+  String? _currentImageUrl;
+  bool _isUploadingImage = false;
 
   @override
   void initState() {
@@ -43,7 +50,7 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     _descriptionController.text = event.description;
     _locationController.text = event.location;
     _capacityController.text = event.capacity?.toString() ?? '';
-    _imageUrlController.text = event.imageUrl ?? '';
+    _currentImageUrl = event.imageUrl;
     _startDateTime = event.startDateTime;
     _endDateTime = event.endDateTime;
     _selectedCategory = event.category;
@@ -56,8 +63,72 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     _descriptionController.dispose();
     _locationController.dispose();
     _capacityController.dispose();
-    _imageUrlController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        setState(() {
+          _selectedImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
+      }
+    }
+  }
+
+  Future<String?> _uploadImage(String eventId) async {
+    if (_selectedImage == null) return _currentImageUrl;
+
+    setState(() {
+      _isUploadingImage = true;
+    });
+
+    try {
+      final attachmentService = ref.read(attachmentServiceProvider);
+      final file = File(_selectedImage!.path);
+      final draft = await attachmentService.prepareImage(
+        owner: AttachmentOwnerRef(
+          type: AttachmentOwnerType.event,
+          ownerId: eventId,
+        ),
+        image: AttachmentInput.image(
+          bytes: await file.readAsBytes(),
+          fileName: _selectedImage!.path.split('/').last,
+          mimeType: 'image/jpeg',
+          sizeBytes: await file.length(),
+        ),
+      );
+      final imageUrl = draft.metadata.url;
+
+      setState(() {
+        _isUploadingImage = false;
+      });
+
+      return imageUrl;
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isUploadingImage = false;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to upload image: $e')));
+      }
+      return _currentImageUrl;
+    }
   }
 
   Future<void> _selectDateTime(BuildContext context, bool isStart) async {
@@ -102,7 +173,7 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
   }
 
   Future<void> _saveEvent() async {
-    if (_isLoading) return;
+    if (_isLoading || _isUploadingImage) return;
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -122,10 +193,25 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     });
 
     try {
+      final eventId = widget.event?.id ?? const Uuid().v4();
+
+      // Upload image if selected
+      final String? imageUrl = await _uploadImage(eventId);
+
+      // If user selected an image but upload didn't produce a URL, abort save
+      if (_selectedImage != null && imageUrl == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to upload image. Please try again.')),
+          );
+        }
+        return;
+      }
+
       final service = ref.read(eventServiceProvider);
 
       final event = EventEntity(
-        id: widget.event?.id ?? const Uuid().v4(),
+        id: eventId,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         location: _locationController.text.trim(),
@@ -140,9 +226,7 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
         capacity: _capacityController.text.trim().isEmpty
             ? null
             : int.tryParse(_capacityController.text.trim()),
-        imageUrl: _imageUrlController.text.trim().isEmpty
-            ? null
-            : _imageUrlController.text.trim(),
+        imageUrl: imageUrl,
         updatedAt: DateTime.now(),
       );
 
@@ -364,16 +448,142 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
             ),
             const SizedBox(height: DesignTokens.spacing16),
 
-            // Image URL (Optional)
-            TextFormField(
-              controller: _imageUrlController,
-              decoration: InputDecoration(
-                labelText: 'Image URL (Optional)',
-                hintText: 'Enter image URL',
-                prefixIcon: const Icon(Icons.image),
-                border: OutlineInputBorder(
+            // Event Image (Optional)
+            Text(
+              'Event Image (Optional)',
+              style: GoogleFonts.manrope(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: _isLoading ? null : _pickImage,
+              child: Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  color: DesignTokens.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  border: Border.all(color: DesignTokens.outlineVariant),
                 ),
+                child: _selectedImage != null
+                    ? Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                              DesignTokens.radiusMd,
+                            ),
+                            child: Image.file(
+                              _selectedImage!,
+                              width: double.infinity,
+                              height: 200,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedImage = null;
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : _currentImageUrl != null
+                    ? Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                              DesignTokens.radiusMd,
+                            ),
+                            child: Image.network(
+                              _currentImageUrl!,
+                              width: double.infinity,
+                              height: 200,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.broken_image,
+                                        size: 48,
+                                        color: DesignTokens.onSurfaceVariant,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Failed to load image',
+                                        style: GoogleFonts.manrope(
+                                          color: DesignTokens.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _currentImageUrl = null;
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_photo_alternate,
+                              size: 48,
+                              color: DesignTokens.onSurfaceVariant,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Tap to add event image',
+                              style: GoogleFonts.manrope(
+                                color: DesignTokens.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
               ),
             ),
             const SizedBox(height: DesignTokens.spacing16),
@@ -410,7 +620,9 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
             SizedBox(
               height: 56,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _saveEvent,
+                onPressed: (_isLoading || _isUploadingImage)
+                    ? null
+                    : _saveEvent,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: DesignTokens.primary,
                   foregroundColor: DesignTokens.onPrimary,
@@ -418,7 +630,7 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                     borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
                   ),
                 ),
-                child: _isLoading
+                child: (_isLoading || _isUploadingImage)
                     ? const SizedBox(
                         height: 24,
                         width: 24,

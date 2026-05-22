@@ -70,12 +70,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
     setState(() {
       _selectedCategory = category;
     });
-    if (category == null) {
-      ref.read(eventStateNotifierProvider.notifier).loadAllUpcomingEvents();
-    } else {
-      // Filter by category - would need to add this to provider
-      ref.read(eventStateNotifierProvider.notifier).loadAllUpcomingEvents();
-    }
+    ref.read(eventStateNotifierProvider.notifier).selectCategory(category);
   }
 
   @override
@@ -398,9 +393,6 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                           ref
                               .read(eventStateNotifierProvider.notifier)
                               .clearDateFilter();
-                          ref
-                              .read(eventStateNotifierProvider.notifier)
-                              .loadAllUpcomingEvents();
                         },
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
