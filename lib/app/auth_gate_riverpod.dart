@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
 import '../auth/presentation/login_screen_riverpod.dart';
-import 'protected_module_router_riverpod.dart';
+import '../home_screen.dart';
 
 /// AuthGate widget that controls access to protected routes
 /// Redirects to login if unauthenticated, shows protected content if authenticated
@@ -48,6 +48,6 @@ class AuthGateRiverpod extends ConsumerWidget {
     }
 
     // User is authenticated - show protected content
-    return const ProtectedModuleRouterRiverpod();
+    return const HomeScreen();
   }
 }

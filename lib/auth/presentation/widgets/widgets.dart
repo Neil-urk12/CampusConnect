@@ -1,4 +1,4 @@
 /// basta export widgets here
 library;
 
-export 'auth_guard.dart';
+// auth_guard.dart removed — dead code; gating handled by auth_gate_riverpod.dart
