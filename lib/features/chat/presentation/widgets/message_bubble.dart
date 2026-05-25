@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../providers/auth_providers.dart';
 import '../../domain/entities/message.dart';
+import '../../domain/exceptions/chat_exceptions.dart';
 import '../../providers/message_provider.dart';
 
 /// Widget displaying a single message bubble.
@@ -18,25 +19,6 @@ class MessageBubble extends ConsumerWidget {
     required this.chatCreatorId,
   });
 
-  bool _canModerate(
-    String? currentUserId,
-    String? currentUserRole,
-    String chatCreatorId,
-  ) {
-    if (currentUserId == null || currentUserRole == null) return false;
-
-    // Admins can always moderate
-    if (currentUserRole == 'admin') return true;
-
-    // Chat creator with organization_leader or admin role can moderate
-    if (currentUserId == chatCreatorId &&
-        (currentUserRole == 'organization_leader' ||
-            currentUserRole == 'admin')) {
-      return true;
-    }
-
-    return false;
-  }
 
   Future<void> _showDeleteConfirmation(
     BuildContext context,
@@ -65,8 +47,18 @@ class MessageBubble extends ConsumerWidget {
 
     if (confirmed == true && context.mounted) {
       try {
-        final messageRepository = ref.read(messageRepositoryProvider);
-        await messageRepository.deleteMessage(chatId, message.id);
+        final messageService = ref.read(messageServiceProvider);
+        final authState = ref.read(authStateNotifierProvider);
+        final user = authState.user;
+        if (user == null) return;
+        await messageService.deleteMessage(
+          chatId: chatId,
+          messageId: message.id,
+          currentUserId: user.userId,
+          currentUserRole: user.role,
+          messageSenderId: message.senderId,
+          chatCreatorId: chatCreatorId,
+        );
 
         if (context.mounted) {
           ScaffoldMessenger.of(
@@ -76,7 +68,11 @@ class MessageBubble extends ConsumerWidget {
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete message: $e')),
+            SnackBar(
+              content: Text(
+                e is ChatException ? e.message : 'Failed to delete message',
+              ),
+            ),
           );
         }
       }
@@ -89,11 +85,13 @@ class MessageBubble extends ConsumerWidget {
     final currentUser = authState.user;
     final isOwnMessage = currentUser?.userId == message.senderId;
 
-    // Check moderation permissions using passed chatCreatorId
-    final canModerate = _canModerate(
-      currentUser?.userId,
-      currentUser?.role,
-      chatCreatorId,
+    // Check moderation permissions using service
+    final messageService = ref.read(messageServiceProvider);
+    final canModerate = messageService.canModerateMessage(
+      currentUserId: currentUser?.userId ?? '',
+      currentUserRole: currentUser?.role ?? '',
+      messageSenderId: message.senderId,
+      chatCreatorId: chatCreatorId,
     );
 
     return Padding(

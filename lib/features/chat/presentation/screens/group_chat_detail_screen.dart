@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../providers/auth_providers.dart';
+import '../../domain/exceptions/chat_exceptions.dart';
 import '../../providers/group_chat_provider.dart';
 import '../../providers/message_provider.dart';
 import '../widgets/edit_group_chat_bottom_sheet.dart';
@@ -46,8 +47,11 @@ class _GroupChatDetailScreenState extends ConsumerState<GroupChatDetailScreen> {
     });
 
     try {
-      final repository = ref.read(groupChatRepositoryProvider);
-      await repository.addMembers(widget.chatId, [user.userId]);
+      final service = ref.read(groupChatServiceProvider);
+      await service.joinPublicChat(
+        chatId: widget.chatId,
+        userId: user.userId,
+      );
 
       // Refresh the chat data to reflect the new membership
       ref.invalidate(groupChatByIdProvider(widget.chatId));
@@ -64,7 +68,9 @@ class _GroupChatDetailScreenState extends ConsumerState<GroupChatDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to join group chat: $e'),
+            content: Text(
+              e is ChatException ? e.message : 'Failed to join group chat',
+            ),
             backgroundColor: Colors.red,
           ),
         );

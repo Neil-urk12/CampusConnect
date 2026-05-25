@@ -43,6 +43,7 @@ class GroupChatRepositoryImpl implements GroupChatRepository {
     await _dataSource.addMembers(chatId, memberIds);
   }
 
+  @override
   /// Adds members to a group chat and syncs with UserModel.groupMemberships.
   Future<void> addMembersWithSync(String chatId, List<String> memberIds) async {
     await _dataSource.addMembersWithSync(chatId, memberIds);

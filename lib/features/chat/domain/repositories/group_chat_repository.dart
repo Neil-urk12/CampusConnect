@@ -21,6 +21,9 @@ abstract class GroupChatRepository {
   /// Adds members to an existing group chat.
   Future<void> addMembers(String chatId, List<String> memberIds);
 
+  /// Adds members to a group chat and syncs groupMemberships on user docs.
+  Future<void> addMembersWithSync(String chatId, List<String> memberIds);
+
   /// Updates group chat details (name, description, avatarUrl).
   Future<void> updateGroupChat({
     required String chatId,

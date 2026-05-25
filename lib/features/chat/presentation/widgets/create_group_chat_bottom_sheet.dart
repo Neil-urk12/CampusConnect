@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../attachments/domain/attachment_types.dart';
 import '../../../../attachments/providers/attachment_providers.dart';
 import '../../../../providers/auth_providers.dart';
+import '../../domain/exceptions/chat_exceptions.dart';
 import '../../providers/group_chat_provider.dart';
 
 /// Bottom sheet for creating a new group chat.
@@ -125,8 +126,8 @@ class _CreateGroupChatBottomSheetState
         avatarUrl = await _uploadAvatar();
       }
 
-      final repository = ref.read(groupChatRepositoryProvider);
-      await repository.createGroupChat(
+      final service = ref.read(groupChatServiceProvider);
+      await service.createGroupChat(
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim().isEmpty
             ? null
@@ -148,7 +149,11 @@ class _CreateGroupChatBottomSheetState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create group chat: $e')),
+          SnackBar(
+            content: Text(
+              e is ChatException ? e.message : 'Failed to create group chat',
+            ),
+          ),
         );
       }
     } finally {

@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../attachments/domain/attachment_types.dart';
 import '../../../../attachments/providers/attachment_providers.dart';
 import '../../domain/entities/group_chat.dart';
+import '../../../../providers/auth_providers.dart';
+import '../../domain/exceptions/chat_exceptions.dart';
 import '../../providers/group_chat_provider.dart';
 
 /// Bottom sheet for editing an existing group chat.
@@ -133,9 +135,21 @@ class _EditGroupChatBottomSheetState
         // avatar is preserved.
       }
 
-      final repository = ref.read(groupChatRepositoryProvider);
-      await repository.updateGroupChat(
+      final service = ref.read(groupChatServiceProvider);
+      final authState = ref.read(authStateNotifierProvider);
+      final user = authState.user;
+      if (user == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Session expired. Please log in again.')),
+          );
+        }
+        return;
+      }
+      await service.updateGroupChat(
         chatId: widget.groupChat.id,
+        currentUserId: user.userId,
+        currentUserRole: user.role,
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim().isEmpty
             ? null
@@ -160,7 +174,11 @@ class _EditGroupChatBottomSheetState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update group chat: $e')),
+          SnackBar(
+            content: Text(
+              e is ChatException ? e.message : 'Failed to update group chat',
+            ),
+          ),
         );
       }
     } finally {

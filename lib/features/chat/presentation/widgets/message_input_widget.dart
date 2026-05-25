@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../attachments/domain/attachment_types.dart';
 import '../../../../providers/auth_providers.dart';
 import '../../../../attachments/providers/attachment_providers.dart';
+import '../../domain/exceptions/chat_exceptions.dart';
 import '../../providers/message_provider.dart';
 
 /// Widget for composing and sending messages with optional image attachments.
@@ -141,8 +142,8 @@ class _MessageInputWidgetState extends ConsumerState<MessageInputWidget> {
         attachmentUrl = attachmentDraft.metadata.url;
       }
 
-      final messageRepository = ref.read(messageRepositoryProvider);
-      await messageRepository.sendMessage(
+      final messageService = ref.read(messageServiceProvider);
+      await messageService.sendMessage(
         chatId: widget.chatId,
         senderId: user.userId,
         senderName: user.fullName,
@@ -161,7 +162,11 @@ class _MessageInputWidgetState extends ConsumerState<MessageInputWidget> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to send message: $e')));
+        ).showSnackBar(SnackBar(
+          content: Text(
+            e is ChatException ? e.message : 'Failed to send message',
+          ),
+        ));
       }
     } finally {
       if (mounted) {
@@ -241,6 +246,7 @@ class _MessageInputWidgetState extends ConsumerState<MessageInputWidget> {
                   maxLines: null,
                   textCapitalization: TextCapitalization.sentences,
                   enabled: !_isSending,
+                  maxLength: 5000,
                 ),
               ),
               if (_isSending)
