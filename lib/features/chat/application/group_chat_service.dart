@@ -1,17 +1,17 @@
 import '../domain/entities/group_chat.dart';
 import '../domain/exceptions/chat_exceptions.dart';
-import '../domain/repositories/group_chat_repository.dart';
+import '../domain/datasources/group_chat_datasource.dart';
 
 /// Service layer for group chat operations.
 ///
 /// Adds validation, permission checks, and error wrapping
-/// on top of the repository seam.
+/// on top of the datasource seam.
 class GroupChatService {
-  final GroupChatRepository _repository;
+  final GroupChatDataSource _dataSource;
 
   const GroupChatService({
-    required GroupChatRepository repository,
-  }) : _repository = repository;
+    required GroupChatDataSource dataSource,
+  }) : _dataSource = dataSource;
 
   /// Get all chats visible to a user (their memberships + public chats).
   Future<List<GroupChat>> getUserChats(String userId) async {
@@ -22,7 +22,7 @@ class GroupChatService {
           message: 'User ID cannot be empty',
         );
       }
-      return await _repository.getUserChats(userId);
+      return await _dataSource.getUserChats(userId);
     } on ChatException {
       rethrow;
     } catch (e) {
@@ -43,7 +43,7 @@ class GroupChatService {
           message: 'Chat ID cannot be empty',
         );
       }
-      return await _repository.getGroupChatById(chatId);
+      return await _dataSource.getGroupChatById(chatId);
     } on ChatException {
       rethrow;
     } catch (e) {
@@ -82,7 +82,7 @@ class GroupChatService {
         memberIds = [...memberIds, creatorId];
       }
 
-      return await _repository.createGroupChat(
+      return await _dataSource.createGroupChat(
         name: name,
         description: description,
         memberIds: memberIds,
@@ -126,14 +126,14 @@ class GroupChatService {
       }
 
       // Permission check: creator or admin
-      final chat = await _repository.getGroupChatById(chatId);
+      final chat = await _dataSource.getGroupChatById(chatId);
       _assertCanEditChat(
         currentUserId: currentUserId,
         currentUserRole: currentUserRole,
         creatorId: chat.creatorId,
       );
 
-      await _repository.updateGroupChat(
+      await _dataSource.updateGroupChat(
         chatId: chatId,
         name: name,
         description: description,
@@ -176,7 +176,7 @@ class GroupChatService {
       }
 
       // Permission check: creator or admin
-      final chat = await _repository.getGroupChatById(chatId);
+      final chat = await _dataSource.getGroupChatById(chatId);
       _assertCanEditChat(
         currentUserId: currentUserId,
         currentUserRole: currentUserRole,
@@ -190,7 +190,7 @@ class GroupChatService {
 
       if (newMembers.isEmpty) return;
 
-      await _repository.addMembers(chatId, newMembers);
+      await _dataSource.addMembers(chatId, newMembers);
     } on ChatException {
       rethrow;
     } catch (e) {
@@ -229,7 +229,7 @@ class GroupChatService {
       }
 
       // Permission check: creator or admin
-      final chat = await _repository.getGroupChatById(chatId);
+      final chat = await _dataSource.getGroupChatById(chatId);
       _assertCanEditChat(
         currentUserId: currentUserId,
         currentUserRole: currentUserRole,
@@ -243,7 +243,7 @@ class GroupChatService {
 
       if (newMembers.isEmpty) return;
 
-      await _repository.addMembersWithSync(chatId, newMembers);
+      await _dataSource.addMembersWithSync(chatId, newMembers);
     } on ChatException {
       rethrow;
     } catch (e) {
@@ -277,7 +277,7 @@ class GroupChatService {
         );
       }
 
-      final chat = await _repository.getGroupChatById(chatId);
+      final chat = await _dataSource.getGroupChatById(chatId);
 
       if (!chat.isPublic) {
         throw const ChatException(
@@ -288,7 +288,7 @@ class GroupChatService {
 
       if (chat.memberIds.contains(userId)) return;
 
-      await _repository.addMembersWithSync(chatId, [userId]);
+      await _dataSource.addMembersWithSync(chatId, [userId]);
     } on ChatException {
       rethrow;
     } catch (e) {

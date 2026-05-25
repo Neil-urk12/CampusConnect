@@ -1,17 +1,17 @@
 import 'package:campusconnect/features/chat/application/group_chat_service.dart';
 import 'package:campusconnect/features/chat/domain/entities/group_chat.dart';
 import 'package:campusconnect/features/chat/domain/exceptions/chat_exceptions.dart';
-import 'package:campusconnect/features/chat/domain/repositories/group_chat_repository.dart';
+import 'package:campusconnect/features/chat/domain/datasources/group_chat_datasource.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('GroupChatService', () {
-    late _FakeGroupChatRepository repository;
+    late _FakeGroupChatDataSource dataSource;
     late GroupChatService service;
 
     setUp(() {
-      repository = _FakeGroupChatRepository();
-      service = GroupChatService(repository: repository);
+      dataSource = _FakeGroupChatDataSource();
+      service = GroupChatService(dataSource: dataSource);
     });
 
     // --- getUserChats ---
@@ -31,7 +31,7 @@ void main() {
       });
 
       test('returns chats from repository', () async {
-        repository.seedChat(_makeChat(id: 'chat-1', creatorId: 'user-1', memberIds: ['user-1']));
+        dataSource.seedChat(_makeChat(id: 'chat-1', creatorId: 'user-1', memberIds: ['user-1']));
 
         final chats = await service.getUserChats('user-1');
 
@@ -40,7 +40,7 @@ void main() {
       });
 
       test('wraps non-ChatException as network error', () async {
-        repository.getUserChatsError = Exception('firestore down');
+        dataSource.getUserChatsError = Exception('firestore down');
 
         await expectLater(
           service.getUserChats('user-1'),
@@ -74,7 +74,7 @@ void main() {
       });
 
       test('returns chat from repository', () async {
-        repository.seedChat(_makeChat(id: 'chat-1', creatorId: 'user-1'));
+        dataSource.seedChat(_makeChat(id: 'chat-1', creatorId: 'user-1'));
 
         final chat = await service.getGroupChatById('chat-1');
 
@@ -82,7 +82,7 @@ void main() {
       });
 
       test('wraps non-ChatException as network error', () async {
-        repository.getGroupChatByIdError = Exception('timeout');
+        dataSource.getGroupChatByIdError = Exception('timeout');
 
         await expectLater(
           service.getGroupChatById('chat-1'),
@@ -195,7 +195,7 @@ void main() {
         );
 
         expect(
-          repository.lastCreateMemberIds,
+          dataSource.lastCreateMemberIds,
           containsAll(['user-1', 'user-2', 'user-3']),
         );
       });
@@ -209,7 +209,7 @@ void main() {
         );
 
         expect(
-          repository.lastCreateMemberIds!.where((id) => id == 'user-1').length,
+          dataSource.lastCreateMemberIds!.where((id) => id == 'user-1').length,
           1,
         );
       });
@@ -224,14 +224,14 @@ void main() {
           avatarUrl: 'https://img.png',
         );
 
-        expect(repository.lastCreateName, 'My Group');
-        expect(repository.lastCreateDescription, 'A desc');
-        expect(repository.lastCreateIsPublic, false);
-        expect(repository.lastCreateAvatarUrl, 'https://img.png');
+        expect(dataSource.lastCreateName, 'My Group');
+        expect(dataSource.lastCreateDescription, 'A desc');
+        expect(dataSource.lastCreateIsPublic, false);
+        expect(dataSource.lastCreateAvatarUrl, 'https://img.png');
       });
 
       test('wraps non-ChatException as network error', () async {
-        repository.createGroupChatError = Exception('write failed');
+        dataSource.createGroupChatError = Exception('write failed');
 
         await expectLater(
           service.createGroupChat(
@@ -258,7 +258,7 @@ void main() {
           isPublic: true,
         );
 
-        expect(repository.lastCreateName, 'My Group');
+        expect(dataSource.lastCreateName, 'My Group');
       });
 
       test('accepts name with exactly 3 characters', () async {
@@ -269,7 +269,7 @@ void main() {
           isPublic: true,
         );
 
-        expect(repository.lastCreateName, 'abc');
+        expect(dataSource.lastCreateName, 'abc');
       });
 
       test('accepts name with exactly 100 characters', () async {
@@ -281,7 +281,7 @@ void main() {
           isPublic: true,
         );
 
-        expect(repository.lastCreateName, name100);
+        expect(dataSource.lastCreateName, name100);
       });
     });
 
@@ -306,7 +306,7 @@ void main() {
       });
 
       test('validates name if provided', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(id: 'chat-1', creatorId: 'user-1', memberIds: ['user-1']),
         );
 
@@ -328,7 +328,7 @@ void main() {
       });
 
       test('allows creator to update', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(id: 'chat-1', creatorId: 'user-1', memberIds: ['user-1']),
         );
 
@@ -339,12 +339,12 @@ void main() {
           name: 'New Name',
         );
 
-        expect(repository.lastUpdateChatId, 'chat-1');
-        expect(repository.lastUpdateName, 'New Name');
+        expect(dataSource.lastUpdateChatId, 'chat-1');
+        expect(dataSource.lastUpdateName, 'New Name');
       });
 
       test('allows admin to update', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(id: 'chat-1', creatorId: 'user-1', memberIds: ['user-1']),
         );
 
@@ -355,13 +355,13 @@ void main() {
           description: 'Updated desc',
         );
 
-        expect(repository.lastUpdateDescription, 'Updated desc');
+        expect(dataSource.lastUpdateDescription, 'Updated desc');
       });
 
       test(
         'throws permission error for non-admin non-creator',
         () async {
-          repository.seedChat(
+          dataSource.seedChat(
             _makeChat(
               id: 'chat-1',
               creatorId: 'user-1',
@@ -385,15 +385,15 @@ void main() {
             ),
           );
 
-          expect(repository.updateGroupChatCalled, false);
+          expect(dataSource.updateGroupChatCalled, false);
         },
       );
 
       test('wraps non-ChatException as network error', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(id: 'chat-1', creatorId: 'user-1', memberIds: ['user-1']),
         );
-        repository.updateGroupChatError = Exception('write failed');
+        dataSource.updateGroupChatError = Exception('write failed');
 
         await expectLater(
           service.updateGroupChat(
@@ -412,7 +412,7 @@ void main() {
       });
 
       test('trims whitespace from name before passing to repository', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(id: 'chat-1', creatorId: 'user-1', memberIds: ['user-1']),
         );
 
@@ -423,7 +423,7 @@ void main() {
           name: '  Updated Name  ',
         );
 
-        expect(repository.lastUpdateName, 'Updated Name');
+        expect(dataSource.lastUpdateName, 'Updated Name');
       });
     });
 
@@ -467,7 +467,7 @@ void main() {
       });
 
       test('throws permission error for non-admin non-creator', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(id: 'chat-1', creatorId: 'user-1', memberIds: ['user-1']),
         );
 
@@ -483,7 +483,7 @@ void main() {
       });
 
       test('filters out existing members before calling repository', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(
             id: 'chat-1',
             creatorId: 'user-1',
@@ -498,11 +498,11 @@ void main() {
           currentUserRole: 'member',
         );
 
-        expect(repository.lastAddMembersIds, ['user-3', 'user-4']);
+        expect(dataSource.lastAddMembersIds, ['user-3', 'user-4']);
       });
 
       test('skips repository call when all members already exist', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(
             id: 'chat-1',
             creatorId: 'user-1',
@@ -517,14 +517,14 @@ void main() {
           currentUserRole: 'member',
         );
 
-        expect(repository.addMembersCalled, false);
+        expect(dataSource.addMembersCalled, false);
       });
 
       test('wraps non-ChatException as network error', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(id: 'chat-1', creatorId: 'user-1', memberIds: ['user-1']),
         );
-        repository.addMembersError = Exception('batch failed');
+        dataSource.addMembersError = Exception('batch failed');
 
         await expectLater(
           service.addMembers(
@@ -572,7 +572,7 @@ void main() {
       });
 
       test('filters existing members and delegates to sync method', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(
             id: 'chat-1',
             creatorId: 'user-1',
@@ -587,14 +587,14 @@ void main() {
           currentUserRole: 'member',
         );
 
-        expect(repository.lastAddMembersWithSyncIds, ['user-2']);
+        expect(dataSource.lastAddMembersWithSyncIds, ['user-2']);
       });
 
       test('wraps non-ChatException as network error', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(id: 'chat-1', creatorId: 'user-1', memberIds: ['user-1']),
         );
-        repository.addMembersWithSyncError = Exception('sync failed');
+        dataSource.addMembersWithSyncError = Exception('sync failed');
 
         await expectLater(
           service.addMembersWithSync(
@@ -614,7 +614,7 @@ void main() {
       });
 
       test('throws permission error for non-admin non-creator', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(id: 'chat-1', creatorId: 'user-1', memberIds: ['user-1']),
         );
 
@@ -660,7 +660,7 @@ void main() {
       });
 
       test('throws permission error for private chat', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(
             id: 'chat-1',
             isPublic: false,
@@ -682,7 +682,7 @@ void main() {
       });
 
       test('skips call when user is already a member', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(
             id: 'chat-1',
             isPublic: true,
@@ -693,11 +693,11 @@ void main() {
 
         await service.joinPublicChat(chatId: 'chat-1', userId: 'user-2');
 
-        expect(repository.addMembersWithSyncCalled, false);
+        expect(dataSource.addMembersWithSyncCalled, false);
       });
 
       test('calls addMembersWithSync for new member on public chat', () async {
-        repository.seedChat(
+        dataSource.seedChat(
           _makeChat(
             id: 'chat-1',
             isPublic: true,
@@ -708,15 +708,15 @@ void main() {
 
         await service.joinPublicChat(chatId: 'chat-1', userId: 'user-2');
 
-        expect(repository.addMembersWithSyncCalled, true);
+        expect(dataSource.addMembersWithSyncCalled, true);
         expect(
-          repository.lastAddMembersWithSyncIds,
+          dataSource.lastAddMembersWithSyncIds,
           contains('user-2'),
         );
       });
 
       test('wraps non-ChatException as network error', () async {
-        repository.getGroupChatByIdError = Exception('network down');
+        dataSource.getGroupChatByIdError = Exception('network down');
 
         await expectLater(
           service.joinPublicChat(chatId: 'chat-1', userId: 'user-1'),
@@ -769,7 +769,7 @@ void main() {
 
     group('error wrapping', () {
       test('rethrows ChatException subclasses without wrapping', () async {
-        repository.getUserChatsError = const ChatException(
+        dataSource.getUserChatsError = const ChatException(
           code: ChatException.chatNotFound,
           message: 'gone',
         );
@@ -781,7 +781,7 @@ void main() {
       });
 
       test('rethrows validation error without wrapping', () async {
-        repository.getUserChatsError = const ChatException(
+        dataSource.getUserChatsError = const ChatException(
           code: ChatException.validationError,
           message: 'bad data',
         );
@@ -821,7 +821,7 @@ GroupChat _makeChat({
   );
 }
 
-class _FakeGroupChatRepository implements GroupChatRepository {
+class _FakeGroupChatDataSource implements GroupChatDataSource {
   final Map<String, GroupChat> _store = {};
 
   // Injectable errors

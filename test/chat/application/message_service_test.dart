@@ -4,8 +4,8 @@ import 'package:campusconnect/features/chat/application/message_service.dart';
 import 'package:campusconnect/features/chat/domain/entities/group_chat.dart';
 import 'package:campusconnect/features/chat/domain/entities/message.dart';
 import 'package:campusconnect/features/chat/domain/exceptions/chat_exceptions.dart';
-import 'package:campusconnect/features/chat/domain/repositories/group_chat_repository.dart';
-import 'package:campusconnect/features/chat/domain/repositories/message_repository.dart';
+import 'package:campusconnect/features/chat/domain/datasources/group_chat_datasource.dart';
+import 'package:campusconnect/features/chat/domain/datasources/message_datasource.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -16,8 +16,8 @@ void main() {
 
     test('sendMessage rejects empty chatId', () async {
       final service = MessageService(
-        messageRepository: _FakeMessageRepository(),
-        chatRepository: _FakeGroupChatRepository(),
+        messageDataSource: _FakeMessageDataSource(),
+        chatDataSource: _FakeGroupChatDataSource(),
       );
 
       await expectLater(
@@ -39,8 +39,8 @@ void main() {
 
     test('sendMessage rejects empty senderId', () async {
       final service = MessageService(
-        messageRepository: _FakeMessageRepository(),
-        chatRepository: _FakeGroupChatRepository(),
+        messageDataSource: _FakeMessageDataSource(),
+        chatDataSource: _FakeGroupChatDataSource(),
       );
 
       await expectLater(
@@ -62,8 +62,8 @@ void main() {
 
     test('sendMessage rejects empty content with no attachment', () async {
       final service = MessageService(
-        messageRepository: _FakeMessageRepository(),
-        chatRepository: _FakeGroupChatRepository(),
+        messageDataSource: _FakeMessageDataSource(),
+        chatDataSource: _FakeGroupChatDataSource(),
       );
 
       await expectLater(
@@ -85,8 +85,8 @@ void main() {
 
     test('sendMessage rejects content over 5000 characters', () async {
       final service = MessageService(
-        messageRepository: _FakeMessageRepository(),
-        chatRepository: _FakeGroupChatRepository(),
+        messageDataSource: _FakeMessageDataSource(),
+        chatDataSource: _FakeGroupChatDataSource(),
       );
 
       await expectLater(
@@ -114,8 +114,8 @@ void main() {
       'sendMessage throws permission error for non-member sender',
       () async {
         final service = MessageService(
-          messageRepository: _FakeMessageRepository(),
-          chatRepository: _FakeGroupChatRepository(
+          messageDataSource: _FakeMessageDataSource(),
+          chatDataSource: _FakeGroupChatDataSource(
             chatMemberIds: ['other-user'],
           ),
         );
@@ -145,10 +145,10 @@ void main() {
     test('sendMessage wraps repository exceptions as network error',
         () async {
       final service = MessageService(
-        messageRepository: _FakeMessageRepository(
+        messageDataSource: _FakeMessageDataSource(
           sendMessageError: Exception('Firestore down'),
         ),
-        chatRepository: _FakeGroupChatRepository(
+        chatDataSource: _FakeGroupChatDataSource(
           chatMemberIds: ['user-1'],
         ),
       );
@@ -170,8 +170,8 @@ void main() {
 
     test('sendMessage returns Message on success', () async {
       final service = MessageService(
-        messageRepository: _FakeMessageRepository(),
-        chatRepository: _FakeGroupChatRepository(chatMemberIds: ['user-1']),
+        messageDataSource: _FakeMessageDataSource(),
+        chatDataSource: _FakeGroupChatDataSource(chatMemberIds: ['user-1']),
       );
 
       final message = await service.sendMessage(
@@ -190,8 +190,8 @@ void main() {
     test('sendMessage accepts empty content when attachmentUrl is provided',
         () async {
       final service = MessageService(
-        messageRepository: _FakeMessageRepository(),
-        chatRepository: _FakeGroupChatRepository(chatMemberIds: ['user-1']),
+        messageDataSource: _FakeMessageDataSource(),
+        chatDataSource: _FakeGroupChatDataSource(chatMemberIds: ['user-1']),
       );
 
       final message = await service.sendMessage(
@@ -215,8 +215,8 @@ void main() {
       'creator, or sender',
       () async {
         final service = MessageService(
-          messageRepository: _FakeMessageRepository(),
-          chatRepository: _FakeGroupChatRepository(),
+          messageDataSource: _FakeMessageDataSource(),
+          chatDataSource: _FakeGroupChatDataSource(),
         );
 
         await expectLater(
@@ -240,10 +240,10 @@ void main() {
     );
 
     test('deleteMessage succeeds for admin', () async {
-      final repo = _FakeMessageRepository();
+      final repo = _FakeMessageDataSource();
       final service = MessageService(
-        messageRepository: repo,
-        chatRepository: _FakeGroupChatRepository(),
+        messageDataSource: repo,
+        chatDataSource: _FakeGroupChatDataSource(),
       );
 
       await service.deleteMessage(
@@ -260,10 +260,10 @@ void main() {
     });
 
     test('deleteMessage succeeds for message sender (self-delete)', () async {
-      final repo = _FakeMessageRepository();
+      final repo = _FakeMessageDataSource();
       final service = MessageService(
-        messageRepository: repo,
-        chatRepository: _FakeGroupChatRepository(),
+        messageDataSource: repo,
+        chatDataSource: _FakeGroupChatDataSource(),
       );
 
       await service.deleteMessage(
@@ -284,8 +284,8 @@ void main() {
 
     test('deleteMessage rejects empty chatId', () async {
       final service = MessageService(
-        messageRepository: _FakeMessageRepository(),
-        chatRepository: _FakeGroupChatRepository(),
+        messageDataSource: _FakeMessageDataSource(),
+        chatDataSource: _FakeGroupChatDataSource(),
       );
 
       await expectLater(
@@ -309,8 +309,8 @@ void main() {
 
     test('deleteMessage rejects empty messageId', () async {
       final service = MessageService(
-        messageRepository: _FakeMessageRepository(),
-        chatRepository: _FakeGroupChatRepository(),
+        messageDataSource: _FakeMessageDataSource(),
+        chatDataSource: _FakeGroupChatDataSource(),
       );
 
       await expectLater(
@@ -340,10 +340,10 @@ void main() {
     test('deleteMessage wraps repository exceptions as network error',
         () async {
       final service = MessageService(
-        messageRepository: _FakeMessageRepository(
+        messageDataSource: _FakeMessageDataSource(
           deleteMessageError: Exception('Firestore down'),
         ),
-        chatRepository: _FakeGroupChatRepository(),
+        chatDataSource: _FakeGroupChatDataSource(),
       );
 
       await expectLater(
@@ -365,8 +365,8 @@ void main() {
 
     test('canModerateMessage returns true for admin role', () {
       final service = MessageService(
-        messageRepository: _FakeMessageRepository(),
-        chatRepository: _FakeGroupChatRepository(),
+        messageDataSource: _FakeMessageDataSource(),
+        chatDataSource: _FakeGroupChatDataSource(),
       );
 
       expect(
@@ -383,8 +383,8 @@ void main() {
     test('canModerateMessage returns true for chat creator with org_leader role',
         () {
       final service = MessageService(
-        messageRepository: _FakeMessageRepository(),
-        chatRepository: _FakeGroupChatRepository(),
+        messageDataSource: _FakeMessageDataSource(),
+        chatDataSource: _FakeGroupChatDataSource(),
       );
 
       expect(
@@ -401,8 +401,8 @@ void main() {
     test('canModerateMessage returns true for message sender (self-delete)',
         () {
       final service = MessageService(
-        messageRepository: _FakeMessageRepository(),
-        chatRepository: _FakeGroupChatRepository(),
+        messageDataSource: _FakeMessageDataSource(),
+        chatDataSource: _FakeGroupChatDataSource(),
       );
 
       expect(
@@ -420,8 +420,8 @@ void main() {
       'canModerateMessage returns false for unrelated user with member role',
       () {
         final service = MessageService(
-          messageRepository: _FakeMessageRepository(),
-          chatRepository: _FakeGroupChatRepository(),
+          messageDataSource: _FakeMessageDataSource(),
+          chatDataSource: _FakeGroupChatDataSource(),
         );
 
         expect(
@@ -442,8 +442,8 @@ void main() {
 
     test('streamMessages returns Stream.error for empty chatId', () async {
       final service = MessageService(
-        messageRepository: _FakeMessageRepository(),
-        chatRepository: _FakeGroupChatRepository(),
+        messageDataSource: _FakeMessageDataSource(),
+        chatDataSource: _FakeGroupChatDataSource(),
       );
 
       await expectLater(
@@ -453,10 +453,10 @@ void main() {
     });
 
     test('streamMessages delegates to repository for valid chatId', () async {
-      final repo = _FakeMessageRepository();
+      final repo = _FakeMessageDataSource();
       final service = MessageService(
-        messageRepository: repo,
-        chatRepository: _FakeGroupChatRepository(),
+        messageDataSource: repo,
+        chatDataSource: _FakeGroupChatDataSource(),
       );
 
       // Just verify it doesn't throw and delegates correctly
@@ -470,7 +470,7 @@ void main() {
 // Fakes
 // =============================================================================
 
-class _FakeMessageRepository implements MessageRepository {
+class _FakeMessageDataSource implements MessageDataSource {
   final Exception? sendMessageError;
   final Exception? deleteMessageError;
 
@@ -482,7 +482,7 @@ class _FakeMessageRepository implements MessageRepository {
   String? deletedMessageId;
   String? streamMessagesChatId;
 
-  _FakeMessageRepository({
+  _FakeMessageDataSource({
     this.sendMessageError,
     this.deleteMessageError,
   });
@@ -526,11 +526,11 @@ class _FakeMessageRepository implements MessageRepository {
   }
 }
 
-class _FakeGroupChatRepository implements GroupChatRepository {
+class _FakeGroupChatDataSource implements GroupChatDataSource {
   final List<String> chatMemberIds;
   final String chatCreatorId;
 
-  _FakeGroupChatRepository({
+  _FakeGroupChatDataSource({
     this.chatMemberIds = const ['user-1'],
     this.chatCreatorId = 'creator-1',
   });

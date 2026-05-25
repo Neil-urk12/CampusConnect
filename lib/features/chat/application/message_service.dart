@@ -1,21 +1,21 @@
 import '../domain/entities/message.dart';
 import '../domain/exceptions/chat_exceptions.dart';
-import '../domain/repositories/message_repository.dart';
-import '../domain/repositories/group_chat_repository.dart';
+import '../domain/datasources/message_datasource.dart';
+import '../domain/datasources/group_chat_datasource.dart';
 
 /// Service layer for message operations.
 ///
 /// Adds validation, permission checks, and error wrapping
-/// on top of the repository seam.
+/// on top of the datasource seam.
 class MessageService {
-  final MessageRepository _messageRepository;
-  final GroupChatRepository _chatRepository;
+  final MessageDataSource _messageDataSource;
+  final GroupChatDataSource _chatDataSource;
 
   const MessageService({
-    required MessageRepository messageRepository,
-    required GroupChatRepository chatRepository,
-  })  : _messageRepository = messageRepository,
-        _chatRepository = chatRepository;
+    required MessageDataSource messageDataSource,
+    required GroupChatDataSource chatDataSource,
+  })  : _messageDataSource = messageDataSource,
+        _chatDataSource = chatDataSource;
 
   /// Stream messages for a chat.
   Stream<List<Message>> streamMessages(String chatId, {int limit = 50}) {
@@ -27,7 +27,7 @@ class MessageService {
         ),
       );
     }
-    return _messageRepository.streamMessages(chatId, limit: limit);
+    return _messageDataSource.streamMessages(chatId, limit: limit);
   }
 
   /// Send a message to a group chat.
@@ -71,7 +71,7 @@ class MessageService {
       }
 
       // Verify sender is a member of the chat
-      final chat = await _chatRepository.getGroupChatById(chatId);
+      final chat = await _chatDataSource.getGroupChatById(chatId);
       if (!chat.memberIds.contains(senderId)) {
         throw const ChatException(
           code: ChatException.permissionDenied,
@@ -79,7 +79,7 @@ class MessageService {
         );
       }
 
-      return await _messageRepository.sendMessage(
+      return await _messageDataSource.sendMessage(
         chatId: chatId,
         senderId: senderId,
         senderName: senderName,
@@ -136,7 +136,7 @@ class MessageService {
         );
       }
 
-      await _messageRepository.deleteMessage(chatId, messageId);
+      await _messageDataSource.deleteMessage(chatId, messageId);
     } on ChatException {
       rethrow;
     } catch (e) {

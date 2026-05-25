@@ -1,15 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/group_chat_model.dart';
+import '../../domain/datasources/group_chat_datasource.dart';
+import '../../domain/entities/group_chat.dart';
+import '../extensions/chat_firestore_extensions.dart';
 
 /// Firestore data source for group chat operations.
-class FirestoreGroupChatDataSource {
+class FirestoreGroupChatDataSource implements GroupChatDataSource {
   final FirebaseFirestore _firestore;
 
   FirestoreGroupChatDataSource({FirebaseFirestore? firestore})
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Fetches all group chats where the user is a member, plus public chats.
-  Future<List<GroupChatModel>> getUserChats(String userId) async {
+  @override
+  Future<List<GroupChat>> getUserChats(String userId) async {
     try {
       // 1. Chats where user is a member
       final memberQuery = await _firestore
@@ -27,15 +30,15 @@ class FirestoreGroupChatDataSource {
 
       // Merge, deduplicate by doc id, sort by createdAt descending
       final seenIds = <String>{};
-      final results = <GroupChatModel>[];
+      final results = <GroupChat>[];
 
       for (final doc in publicQuery.docs) {
         seenIds.add(doc.id);
-        results.add(GroupChatModel.fromFirestore(doc));
+        results.add(doc.toGroupChat());
       }
       for (final doc in memberQuery.docs) {
         if (seenIds.add(doc.id)) {
-          results.add(GroupChatModel.fromFirestore(doc));
+          results.add(doc.toGroupChat());
         }
       }
 
@@ -47,7 +50,8 @@ class FirestoreGroupChatDataSource {
   }
 
   /// Creates a new group chat.
-  Future<GroupChatModel> createGroupChat({
+  @override
+  Future<GroupChat> createGroupChat({
     required String name,
     String? description,
     required List<String> memberIds,
@@ -69,14 +73,15 @@ class FirestoreGroupChatDataSource {
       });
 
       final doc = await docRef.get();
-      return GroupChatModel.fromFirestore(doc);
+      return doc.toGroupChat();
     } catch (e) {
       throw Exception('Failed to create group chat: $e');
     }
   }
 
   /// Fetches a single group chat by ID.
-  Future<GroupChatModel> getGroupChatById(String chatId) async {
+  @override
+  Future<GroupChat> getGroupChatById(String chatId) async {
     try {
       final doc = await _firestore.collection('groupChats').doc(chatId).get();
 
@@ -84,13 +89,14 @@ class FirestoreGroupChatDataSource {
         throw Exception('Group chat not found');
       }
 
-      return GroupChatModel.fromFirestore(doc);
+      return doc.toGroupChat();
     } catch (e) {
       throw Exception('Failed to fetch group chat: $e');
     }
   }
 
   /// Adds members to an existing group chat.
+  @override
   Future<void> addMembers(String chatId, List<String> memberIds) async {
     try {
       // For public chats, read the document first to build the full memberIds array
@@ -119,6 +125,7 @@ class FirestoreGroupChatDataSource {
   }
 
   /// Adds members to a group chat and syncs with UserModel.groupMemberships using batch write.
+  @override
   Future<void> addMembersWithSync(String chatId, List<String> memberIds) async {
     try {
       final batch = _firestore.batch();
@@ -146,6 +153,7 @@ class FirestoreGroupChatDataSource {
   }
 
   /// Updates group chat details (name, description, avatarUrl).
+  @override
   Future<void> updateGroupChat({
     required String chatId,
     String? name,

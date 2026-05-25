@@ -1,8 +1,11 @@
 import '../entities/group_chat.dart';
 
-/// Repository interface for group chat operations.
-abstract class GroupChatRepository {
-  /// Fetches all group chats where the user is a member.
+/// Abstract data source for group chat operations.
+///
+/// Lives in the domain layer so repository implementations can depend
+/// on it without importing Firestore or other data-layer details.
+abstract class GroupChatDataSource {
+  /// Fetches all group chats where the user is a member, plus public chats.
   Future<List<GroupChat>> getUserChats(String userId);
 
   /// Creates a new group chat.
@@ -21,7 +24,7 @@ abstract class GroupChatRepository {
   /// Adds members to an existing group chat.
   Future<void> addMembers(String chatId, List<String> memberIds);
 
-  /// Adds members to a group chat and syncs groupMemberships on user docs.
+  /// Adds members and syncs groupMemberships on user docs.
   Future<void> addMembersWithSync(String chatId, List<String> memberIds);
 
   /// Updates group chat details (name, description, avatarUrl).

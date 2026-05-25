@@ -1,29 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../application/message_service.dart';
 import '../data/datasources/firestore_message_datasource.dart';
-import '../data/repositories/message_repository_impl.dart';
+import '../domain/datasources/message_datasource.dart';
 import '../domain/entities/message.dart';
-import '../domain/repositories/message_repository.dart';
 import 'group_chat_provider.dart';
 
 /// Provider for FirestoreMessageDataSource.
-final messageDataSourceProvider = Provider<FirestoreMessageDataSource>((ref) {
+final messageDataSourceProvider = Provider<MessageDataSource>((ref) {
   return FirestoreMessageDataSource();
 });
 
-/// Provider for MessageRepository.
-final messageRepositoryProvider = Provider<MessageRepository>((ref) {
-  final dataSource = ref.watch(messageDataSourceProvider);
-  return MessageRepositoryImpl(dataSource: dataSource);
-});
 
 /// Provider for MessageService.
 final messageServiceProvider = Provider<MessageService>((ref) {
-  final messageRepository = ref.watch(messageRepositoryProvider);
-  final chatRepository = ref.watch(groupChatRepositoryProvider);
+  final messageDataSource = ref.watch(messageDataSourceProvider);
+  final chatDataSource = ref.watch(groupChatDataSourceProvider);
   return MessageService(
-    messageRepository: messageRepository,
-    chatRepository: chatRepository,
+    messageDataSource: messageDataSource,
+    chatDataSource: chatDataSource,
   );
 });
 

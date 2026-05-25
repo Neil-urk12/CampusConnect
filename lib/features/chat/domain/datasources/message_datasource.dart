@@ -1,7 +1,10 @@
 import '../entities/message.dart';
 
-/// Repository interface for message operations.
-abstract class MessageRepository {
+/// Abstract data source interface for message operations.
+///
+/// Lives in the domain layer so application/service code can depend on
+/// the interface without coupling to Firestore.
+abstract class MessageDataSource {
   /// Streams messages for a specific chat in real-time.
   Stream<List<Message>> streamMessages(String chatId, {int limit = 50});
 
